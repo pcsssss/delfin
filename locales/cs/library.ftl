@@ -6,6 +6,7 @@ library-section-title =
     .latest-shows = Nejnovější seriály
     .latest-music = Nejnovější hudba
     .my-media = Moje média
+    .latest-in = Nejnovější { $name }
 library-media-tile-unnamed-item = Nepojmenovaná položka
 library-refresh-button = Obnovit knihovnu
 library-loading = Načítání vaší knihovny…

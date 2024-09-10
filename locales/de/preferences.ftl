@@ -88,3 +88,6 @@ prefs-vp-intro-skipper =
 prefs-general-restore-most-recent =
     .title = Beim Start von { app-name } automatisch anmelden
     .subtitle = Beim Start wirst du mit dem letzten verwendeten Konto angemeldet
+prefs-general-use-episode-image =
+    .title = Episodenbilder in den Abschnitten „Nächste“ und „Weitergucken“ verwenden
+    .subtitle = „Nächste“ und „Weitergucken“ werden Epoisodenbilder als Thumbnails benutzen, und nicht das Haupt-Thumbnail der Serie.

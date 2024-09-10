@@ -18,6 +18,7 @@ library-section-title =
     .latest-shows = 最新的节目
     .latest-music = 最新的音乐
     .my-media = 我的媒体
+    .latest-in = 最新的 { $name }
 library-episode-name-with-season-and-episode = 第{ $seasonNumber }季:第{ $episodeNumber }集 - { $episodeName }
 library-series-and-episode-name = { $seriesName } - { $episodeName }
 library-media-tile-unnamed-item = 未命名项目

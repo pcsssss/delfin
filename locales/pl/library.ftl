@@ -6,6 +6,7 @@ library-section-title =
     .latest-shows = Najnowsze seriale
     .latest-music = Najnowsza muzyka
     .my-media = Moje multimedia
+    .latest-in = Najnowsze { $name }
 library-offline =
     .title = Nie udało się połączyć z serwerem
     .description = Upewnij się, że serwer jest uruchomiony i spróbuj ponownie.

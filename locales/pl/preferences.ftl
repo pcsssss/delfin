@@ -39,6 +39,7 @@ prefs-vp-jellyscrub =
     .subtitle =
         Pokaż miniatury, najeżdżając na pasek postępu wideo.
         To wymaga zainstalowanej wtyczki <a href="{ $jellyscrubUrl }">Jellyscrub</a> na twoim serwerze.
+        Zamiast tego na obsługiwanych serwerach używany będzie natywny trickplay Jellyfin.
 prefs-vp-on-left-click =
     .title = Kiedy kliknięto mysz
     .subtitle = Co się dzieje, gdy kliknięto lewym przyciskiem myszy na odtwarzacz
