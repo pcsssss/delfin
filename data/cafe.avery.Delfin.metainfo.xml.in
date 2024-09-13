@@ -85,6 +85,40 @@
   </provides>
 
   <releases>
+    <release version="0.4.6" date="2024-09-13">
+      <description>
+        <p>Added:</p>
+
+        <ul>
+          <li>Add setting to use episode images in Next Up and Continue Watching sections - thanks
+            @Dragnansia</li>
+          <li>Support mixed content type collections</li>
+          <li>Add a tooltip to ellipsized episode titles displaying the full episode title - thanks
+            @Dragnansia</li>
+          <li>Show video chapters in the scrubber bar</li>
+          <li>Allow setting a custom amount to skip forwards/backwards by when pressing the skip
+            buttons or left/right arrow keys</li>
+          <li>Keyboard shortcuts for playback speed (&lt; to slow down, &gt; to speed up)</li>
+        </ul>
+
+        <p>Changed:</p>
+
+        <ul>
+          <li>Improve library layout for smaller screens - thanks @ashleyr</li>
+          <li>Use collection name in Latest rows on homepage - thanks @selfhoster1312</li>
+          <li>Translation updates from Weblate - thanks to Dirk, Dragnansia, Eryk Michalak, Fjuro,
+            gallegonovato, kilaketia, Monti, Outbreak2096, smrtrfszm, Tuba2, and Vistaus</li>
+        </ul>
+
+        <p>Fixed:</p>
+
+        <ul>
+          <li>Double-clicking to enter fullscreen would cause videos to pause - thanks @nemesisx00</li>
+          <li>Collections page displaying incorrect total collections count - thanks @Dragnansia</li>
+        </ul>
+      </description>
+    </release>
+
     <release version="0.4.5" date="2024-05-27">
       <description>
         <ul>
@@ -94,7 +128,8 @@
           <li>Show hours in video player timestamp</li>
           <li>Add 1.75x playback speed</li>
           <li>Keyboard navigation improvements</li>
-          <li>Translation updates from Weblate - thanks to Eryk Michalak, Fjuro, owofied, Tuba2, Vistaus, yanndvd, and yareg</li>
+          <li>Translation updates from Weblate - thanks to Eryk Michalak, Fjuro, owofied, Tuba2,
+            Vistaus, yanndvd, and yareg</li>
         </ul>
       </description>
     </release>
@@ -103,7 +138,8 @@
       <description>
         <ul>
           <li>Fix video playback opening a separate window with MPV 0.38.0</li>
-          <li>Translation updates – thanks to Codeberg users gallegonovato, Medzik, ThetaDev, and Tuba2</li>
+          <li>Translation updates – thanks to Codeberg users gallegonovato, Medzik, ThetaDev, and
+            Tuba2</li>
         </ul>
       </description>
     </release>
@@ -113,7 +149,8 @@
         <ul>
           <li>Added playback speed control to video player</li>
           <li>Updated dependencies</li>
-          <li>Translation updates – thanks to Codeberg users Eryk Michalak, Fjuro, Kenxu2022, smrtrfszm, Vistaus</li>
+          <li>Translation updates – thanks to Codeberg users Eryk Michalak, Fjuro, Kenxu2022,
+            smrtrfszm, Vistaus</li>
         </ul>
       </description>
     </release>
@@ -124,7 +161,8 @@
           <li>Map escape key to exit fullscreen instead of back in video player</li>
           <li>Fix high bitrate media not being direct played</li>
           <li>Fix collections page title not being localized</li>
-          <li>Translation updates from Weblate – thanks to Codeberg users Application-Maker, Dirk, Filipe Motta, Fjuro, gallegonovato, Heimen Stoffels, and ThetaDev</li>
+          <li>Translation updates from Weblate – thanks to Codeberg users Application-Maker, Dirk,
+            Filipe Motta, Fjuro, gallegonovato, Heimen Stoffels, and ThetaDev</li>
         </ul>
       </description>
     </release>
@@ -133,12 +171,14 @@
       <description>
         <ul>
           <li>You can now mark movies, series, and episodes as watched or not watched</li>
-          <li>You can now click on My Media and Latest home section headings to see the rest of the collection</li>
+          <li>You can now click on My Media and Latest home section headings to see the rest of the
+            collection</li>
           <li>Movie runtime is now displayed above the description</li>
           <li>The year that an item was released/in production is now displayed below its thumbnail</li>
           <li>Fix app crashing when you try to close it</li>
           <li>Updated dependencies</li>
-          <li>Translation updates from Weblate – thanks to Codeberg users Filipe Motta, Fjuro, gallegonovato, Heimen Stoffels, ThetaDev, and yareg</li>
+          <li>Translation updates from Weblate – thanks to Codeberg users Filipe Motta, Fjuro,
+            gallegonovato, Heimen Stoffels, ThetaDev, and yareg</li>
         </ul>
       </description>
     </release>

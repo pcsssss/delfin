@@ -1,7 +1,7 @@
 project(
   'delfin',
   'rust',
-  version: '0.4.5',
+  version: '0.4.6',
   # bad hack to compile libvideo-player-mpv
   subproject_dir: 'video_player_mpv',
   meson_version: '>= 0.59',
@@ -22,9 +22,11 @@ endif
 version = meson.project_version()
 if get_option('profile') == 'dev'
   vcs_tag = run_command(
-      'git', 'rev-parse', '--short', 'HEAD',
-      check: false,
-    ).stdout().strip()
+    'git',
+    'rev-parse',
+    '--short', 'HEAD',
+    check: false,
+  ).stdout().strip()
   if vcs_tag == ''
     version += '-devel'
   else
@@ -34,8 +36,10 @@ endif
 
 meson.add_dist_script(
   'build-aux/dist-vendor',
-  meson.project_build_root() / 'meson-dist' / meson.project_name() + '-' + meson.project_version(),
-  meson.project_source_root()
+  meson.project_build_root() / 'meson-dist' / meson.project_name()
+  + '-'
+  + meson.project_version(),
+  meson.project_source_root(),
 )
 
 prefix = get_option('prefix')
