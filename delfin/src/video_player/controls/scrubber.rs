@@ -5,8 +5,7 @@ use std::{cell::RefCell, sync::Arc};
 use tracing::warn;
 
 use gdk::{Rectangle, Texture};
-use graphene::Point;
-use gtk::{gdk, gdk_pixbuf, graphene, prelude::*};
+use gtk::{gdk, gdk_pixbuf, prelude::*};
 use relm4::prelude::*;
 
 use crate::{
@@ -23,7 +22,7 @@ pub(crate) static SCRUBBER_BROKER: ResettableMessageBroker<ScrubberInput> =
     ResettableMessageBroker::new();
 
 struct ScrubberPopover {
-    position: f64,
+    position: f32,
     timestamp: usize,
     thumbnail: Option<Texture>,
     chapter: Option<Chapter>,
@@ -132,7 +131,7 @@ impl Component for Scrubber {
                 #[watch]
                 set_pointing_to: model.popover
                     .as_ref()
-                    .map(|p| Rectangle::new(p.position as i32 , -15, 0, 0))
+                    .map(|p| Rectangle::new(p.position as i32, -15, 0, 0))
                     .as_ref(),
 
                 gtk::Box {
@@ -228,10 +227,9 @@ impl Component for Scrubber {
         widgets: &mut Self::Widgets,
         message: Self::Input,
         sender: ComponentSender<Self>,
-        _root: &Self::Root,
+        root: &Self::Root,
     ) {
         let scrubber = &widgets.scrubber;
-        let popover = &widgets.popover;
 
         match message {
             ScrubberInput::Reset => {
@@ -279,11 +277,10 @@ impl Component for Scrubber {
                     self.position = timestamp;
                 }
 
-                let popover_position =
-                    scrubber.compute_point(popover, &Point::new(position as f32, 0.0));
+                let popover_position = self.calculate_popover_position(root, scrubber, position);
 
                 self.popover = Some(ScrubberPopover {
-                    position: popover_position.map_or(0.0, |p| p.x()) as f64,
+                    position: popover_position.unwrap_or(0.),
                     timestamp,
                     thumbnail: self.get_thumbnail(timestamp),
                     chapter: self.get_chapter(timestamp),
@@ -372,6 +369,18 @@ impl Scrubber {
         for chapter in &self.chapters {
             scrubber.add_mark(chapter.timestamp as f64, gtk::PositionType::Top, None);
         }
+    }
+
+    fn calculate_popover_position(
+        &self,
+        root: &gtk::Box,
+        scrubber: &gtk::Scale,
+        mouse_position: f64,
+    ) -> Option<f32> {
+        let scrubber_bounds = scrubber.compute_bounds(root)?;
+        let range_rect = scrubber.range_rect();
+        let range_offset = (scrubber_bounds.width() - range_rect.width() as f32) / 2.;
+        Some(scrubber_bounds.x() + range_offset + mouse_position as f32)
     }
 }
 
