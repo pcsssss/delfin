@@ -85,6 +85,15 @@
   </provides>
 
   <releases>
+    <release version="0.4.7" date="2024-10-07">
+      <description>
+        <ul>
+          <li>Fixed an issue that caused the scrubber timestamp popup to be stuck in place instead of following the mouse cursor</li>
+          <li>Translation updates from Weblate - thanks to Tuba2</li>
+        </ul>
+      </description>
+    </release>
+
     <release version="0.4.6" date="2024-09-13">
       <description>
         <p>Added:</p>
