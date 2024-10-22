@@ -644,6 +644,11 @@ and/or use gtk-doc annotations.  -->
           <type name="none" c:type="void"/>
         </return-value>
       </glib:signal>
+      <glib:signal name="initialized" when="last">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+      </glib:signal>
       <glib:signal name="mute-updated" when="last">
         <return-value transfer-ownership="none">
           <type name="none" c:type="void"/>

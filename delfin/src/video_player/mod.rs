@@ -57,6 +57,7 @@ const CURSOR_HIDE_TIMEOUT: Duration = Duration::from_secs(3);
 
 pub struct VideoPlayer {
     backend: Arc<RefCell<dyn VideoPlayerBackend>>,
+    initialized: bool,
     media: Option<BaseItemDto>,
     api_client: Option<Arc<ApiClient>>,
     hiding: Arc<AtomicBool>,
@@ -79,8 +80,9 @@ pub struct VideoPlayer {
     skip_intro: AsyncController<SkipIntro>,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum VideoPlayerInput {
+    PlayerInitialized,
     ConfigUpdated(VideoPlayerConfig),
     PlayVideo(Arc<ApiClient>, Box<BaseItemDto>),
     SetShowControls { show: bool, locked: bool },
@@ -140,7 +142,9 @@ impl Component for VideoPlayer {
                 #[local_ref]
                 video_player -> gtk::Widget {
                     #[watch]
-                    set_visible: !matches!(model.player_state, PlayerState::Loading),
+                    // Player needs to be visible before initialization or the
+                    // widget won't be realized
+                    set_visible: !model.initialized || !matches!(model.player_state, PlayerState::Loading),
 
                     add_controller = gtk::GestureClick {
                         connect_released[sender] => move |_, n_press, _, _| {
@@ -232,6 +236,7 @@ impl Component for VideoPlayer {
 
         let model = VideoPlayer {
             backend,
+            initialized: false,
             media: None,
             api_client: None,
             hiding: Arc::new(AtomicBool::new(false)),
@@ -254,8 +259,12 @@ impl Component for VideoPlayer {
             skip_intro,
         };
 
-        model.configure_player(&CONFIG.read().video_player);
-        VideoPlayer::subscribe_to_config(&sender);
+        model.backend.borrow_mut().connect_initialized({
+            let sender = sender.clone();
+            Box::new(move || {
+                sender.input(VideoPlayerInput::PlayerInitialized);
+            })
+        });
 
         model.backend.borrow_mut().connect_player_state_changed({
             let sender = sender.clone();
@@ -350,6 +359,11 @@ impl Component for VideoPlayer {
         _root: &Self::Root,
     ) {
         match message {
+            VideoPlayerInput::PlayerInitialized => {
+                self.configure_player(&CONFIG.read().video_player);
+                VideoPlayer::subscribe_to_config(&sender);
+                self.initialized = true;
+            }
             VideoPlayerInput::ConfigUpdated(video_player_config) => {
                 self.configure_player(&video_player_config);
             }

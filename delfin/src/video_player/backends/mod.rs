@@ -117,6 +117,9 @@ pub trait VideoPlayerBackend: fmt::Debug {
     /// Set subtitle font.
     fn set_subtitle_font(&self, font: &VideoPlayerSubtitleFont);
 
+    /// Get notified when the video player has been initialized.
+    fn connect_initialized(&mut self, callback: Box<dyn Fn() + Send + 'static>) -> Uuid;
+
     /// Get notified when video player reaches the end of the current video.
     fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>) -> Uuid;
 

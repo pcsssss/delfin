@@ -27,6 +27,7 @@
 static gboolean destroyed = false;
 
 enum {
+  SIGNAL_INITIALIZED,
   SIGNAL_POSITION_UPDATED,
   SIGNAL_DURATION_UPDATED,
   SIGNAL_TRACKS_UPDATED,
@@ -70,6 +71,9 @@ static void vpm_video_player_mpv_class_init(VpmVideoPlayerMpvClass *klass) {
       gdk_display_get_default(), GTK_STYLE_PROVIDER(provider),
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
+  signals[SIGNAL_INITIALIZED] =
+      g_signal_new("initialized", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST,
+                   0, NULL, NULL, NULL, G_TYPE_NONE, 0);
   signals[SIGNAL_DURATION_UPDATED] = g_signal_new(
       "duration-updated", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0, NULL,
       NULL, NULL, G_TYPE_NONE, 1, G_TYPE_DOUBLE);
@@ -250,8 +254,6 @@ static void mpv_update_callback(void *ctx) {
       g_idle_add_full(G_PRIORITY_HIGH_IDLE, process_events, ctx, NULL);
 }
 
-static void realize(GtkGLArea *area) { gtk_gl_area_make_current(area); }
-
 static void resize(GtkGLArea *area, int width, int height, gpointer data) {
   struct MpvCtx *mpv_ctx = (struct MpvCtx *)data;
   mpv_ctx->width = width;
@@ -269,10 +271,35 @@ static void destroy(GtkGLArea *area, gpointer data) {
   mpv_ctx = NULL;
 }
 
-gboolean render(GtkGLArea *widget, GdkGLContext *ctx, gpointer user_data);
+GtkWidget *vpm_video_player_mpv_new() {
+  return g_object_new(vpm_video_player_mpv_get_type(), NULL);
+}
 
-static void vpm_video_player_mpv_init(VpmVideoPlayerMpv *widget) {
-  setlocale(LC_NUMERIC, "C");
+gboolean render(GtkGLArea *widget, GdkGLContext *ctx, gpointer data) {
+  struct MpvCtx *mpv_ctx = (struct MpvCtx *)data;
+
+  if ((mpv_render_context_update(mpv_ctx->render_context) &
+       MPV_RENDER_UPDATE_FRAME)) {
+    gint fbo = -1;
+    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fbo);
+
+    mpv_opengl_fbo opengl_fbo = {fbo, mpv_ctx->width, mpv_ctx->height, 0};
+    mpv_render_param params[] = {{MPV_RENDER_PARAM_OPENGL_FBO, &opengl_fbo},
+                                 {MPV_RENDER_PARAM_FLIP_Y, &(int){1}},
+                                 {MPV_RENDER_PARAM_INVALID, NULL}};
+
+    mpv_render_context_render(mpv_ctx->render_context, params);
+  }
+
+  gtk_gl_area_queue_render(widget);
+
+  return TRUE;
+}
+
+static void realize(GtkGLArea *area, gpointer data) {
+  struct _VpmVideoPlayerMpv *widget = (struct _VpmVideoPlayerMpv *)data;
+
+  gtk_gl_area_make_current(area);
 
   struct MpvCtx *mpv_ctx = malloc(sizeof *mpv_ctx);
 
@@ -311,35 +338,17 @@ static void vpm_video_player_mpv_init(VpmVideoPlayerMpv *widget) {
   mpv_observe_property(mpv_ctx->handle, 0, "current-ao", MPV_FORMAT_STRING);
   mpv_observe_property(mpv_ctx->handle, 0, "pause", MPV_FORMAT_FLAG);
 
-  g_signal_connect(&widget->parent, "realize", G_CALLBACK(realize), NULL);
   g_signal_connect(&widget->parent, "render", G_CALLBACK(render), mpv_ctx);
   g_signal_connect(&widget->parent, "resize", G_CALLBACK(resize), mpv_ctx);
   g_signal_connect(&widget->parent, "destroy", G_CALLBACK(destroy), mpv_ctx);
+
+  g_signal_emit(widget, signals[SIGNAL_INITIALIZED], 0);
 }
 
-GtkWidget *vpm_video_player_mpv_new() {
-  return g_object_new(vpm_video_player_mpv_get_type(), NULL);
-}
+static void vpm_video_player_mpv_init(VpmVideoPlayerMpv *widget) {
+  setlocale(LC_NUMERIC, "C");
 
-gboolean render(GtkGLArea *widget, GdkGLContext *ctx, gpointer data) {
-  struct MpvCtx *mpv_ctx = (struct MpvCtx *)data;
-
-  if ((mpv_render_context_update(mpv_ctx->render_context) &
-       MPV_RENDER_UPDATE_FRAME)) {
-    gint fbo = -1;
-    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fbo);
-
-    mpv_opengl_fbo opengl_fbo = {fbo, mpv_ctx->width, mpv_ctx->height, 0};
-    mpv_render_param params[] = {{MPV_RENDER_PARAM_OPENGL_FBO, &opengl_fbo},
-                                 {MPV_RENDER_PARAM_FLIP_Y, &(int){1}},
-                                 {MPV_RENDER_PARAM_INVALID, NULL}};
-
-    mpv_render_context_render(mpv_ctx->render_context, params);
-  }
-
-  gtk_gl_area_queue_render(widget);
-
-  return TRUE;
+  g_signal_connect(&widget->parent, "realize", G_CALLBACK(realize), widget);
 }
 
 void vpm_video_player_mpv_play_uri(VpmVideoPlayerMpv *self, const char *uri) {

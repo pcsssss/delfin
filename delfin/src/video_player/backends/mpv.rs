@@ -248,6 +248,17 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
         player.set_subtitle_font_italic(font.italic);
     }
 
+    fn connect_initialized(&mut self, callback: Box<dyn Fn() + Send + 'static>) -> Uuid {
+        let id = uuid();
+        self.signal_handler_ids.insert(
+            id,
+            self.widget.connect_initialized(move |_| {
+                callback();
+            }),
+        );
+        id
+    }
+
     fn connect_end_of_stream(&mut self, callback: Box<dyn Fn() + Send + 'static>) -> Uuid {
         let id = uuid();
         self.signal_handler_ids.insert(
