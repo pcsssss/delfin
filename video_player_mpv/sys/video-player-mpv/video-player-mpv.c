@@ -22,10 +22,6 @@
 
 #include "video-player-mpv/track-list.h"
 
-// TODO: MPV was calling mpv_update_callback while/after the player was
-// destroyed. :(
-static gboolean destroyed = false;
-
 enum {
   SIGNAL_INITIALIZED,
   SIGNAL_POSITION_UPDATED,
@@ -50,7 +46,6 @@ struct MpvCtx {
   mpv_render_context *render_context;
   int width;
   int height;
-  guint event_source_id;
 };
 
 struct _VpmVideoPlayerMpv {
@@ -129,13 +124,8 @@ static void *get_proc_address(void *fn_ctx, const gchar *name) {
 }
 
 gboolean process_events(gpointer data) {
-  if (destroyed) {
-    return FALSE;
-  }
-
   struct _VpmVideoPlayerMpv *widget = (struct _VpmVideoPlayerMpv *)data;
   int done = 0;
-  gtk_gl_area_queue_render(GTK_GL_AREA(&widget->parent));
 
   while (!done) {
     mpv_event *event = mpv_wait_event(widget->mpv_ctx->handle, 0);
@@ -243,15 +233,22 @@ gboolean process_events(gpointer data) {
   return FALSE;
 }
 
-static void mpv_update_callback(void *ctx) {
-  struct _VpmVideoPlayerMpv *widget = (struct _VpmVideoPlayerMpv *)ctx;
+static void mpv_wakeup_callback(void *data) {
+  g_idle_add_full(G_PRIORITY_HIGH_IDLE, process_events, data, NULL);
+}
 
-  if (destroyed) {
-    return;
+gboolean try_render_frame(gpointer data) {
+  struct _VpmVideoPlayerMpv *widget = (struct _VpmVideoPlayerMpv *)data;
+  if ((mpv_render_context_update(widget->mpv_ctx->render_context) &
+       MPV_RENDER_UPDATE_FRAME)) {
+    gtk_gl_area_queue_render(&widget->parent);
   }
 
-  widget->mpv_ctx->event_source_id =
-      g_idle_add_full(G_PRIORITY_HIGH_IDLE, process_events, ctx, NULL);
+  return FALSE;
+}
+
+static void mpv_update_callback(void *data) {
+  g_idle_add_full(G_PRIORITY_HIGH_IDLE, try_render_frame, data, NULL);
 }
 
 static void resize(GtkGLArea *area, int width, int height, gpointer data) {
@@ -261,8 +258,6 @@ static void resize(GtkGLArea *area, int width, int height, gpointer data) {
 }
 
 static void destroy(GtkGLArea *area, gpointer data) {
-  destroyed = true;
-
   struct MpvCtx *mpv_ctx = (struct MpvCtx *)data;
   mpv_render_context_set_update_callback(mpv_ctx->render_context, NULL, NULL);
   mpv_render_context_free(mpv_ctx->render_context);
@@ -278,20 +273,15 @@ GtkWidget *vpm_video_player_mpv_new() {
 gboolean render(GtkGLArea *widget, GdkGLContext *ctx, gpointer data) {
   struct MpvCtx *mpv_ctx = (struct MpvCtx *)data;
 
-  if ((mpv_render_context_update(mpv_ctx->render_context) &
-       MPV_RENDER_UPDATE_FRAME)) {
-    gint fbo = -1;
-    glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fbo);
+  gint fbo = -1;
+  glGetIntegerv(GL_FRAMEBUFFER_BINDING, &fbo);
 
-    mpv_opengl_fbo opengl_fbo = {fbo, mpv_ctx->width, mpv_ctx->height, 0};
-    mpv_render_param params[] = {{MPV_RENDER_PARAM_OPENGL_FBO, &opengl_fbo},
-                                 {MPV_RENDER_PARAM_FLIP_Y, &(int){1}},
-                                 {MPV_RENDER_PARAM_INVALID, NULL}};
+  mpv_opengl_fbo opengl_fbo = {fbo, mpv_ctx->width, mpv_ctx->height, 0};
+  mpv_render_param params[] = {{MPV_RENDER_PARAM_OPENGL_FBO, &opengl_fbo},
+                               {MPV_RENDER_PARAM_FLIP_Y, &(int){1}},
+                               {MPV_RENDER_PARAM_INVALID, NULL}};
 
-    mpv_render_context_render(mpv_ctx->render_context, params);
-  }
-
-  gtk_gl_area_queue_render(widget);
+  mpv_render_context_render(mpv_ctx->render_context, params);
 
   return TRUE;
 }
@@ -309,7 +299,6 @@ static void realize(GtkGLArea *area, gpointer data) {
   mpv_request_log_messages(mpv_ctx->handle, "debug");
 
   widget->mpv_ctx = mpv_ctx;
-  destroyed = FALSE;
 
   mpv_render_param params[] = {
       {MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL},
@@ -323,7 +312,7 @@ static void realize(GtkGLArea *area, gpointer data) {
 
   mpv_render_context_create(&mpv_ctx->render_context, mpv_ctx->handle, params);
 
-  mpv_set_wakeup_callback(mpv_ctx->handle, mpv_update_callback, widget);
+  mpv_set_wakeup_callback(mpv_ctx->handle, mpv_wakeup_callback, widget);
   mpv_render_context_set_update_callback(mpv_ctx->render_context,
                                          mpv_update_callback, widget);
 
