@@ -91,9 +91,10 @@ pub enum VideoPlayerInput {
     StopPlayer,
     PlayerStateChanged(PlayerState),
     SetRevealerRevealChild(bool),
-    MouseMove(f64, f64),
-    MouseHide,
     MouseClick(i32),
+    MouseMove(f64, f64),
+    ShowCursor,
+    HideCursor,
 }
 
 #[derive(Debug)]
@@ -229,7 +230,7 @@ impl Component for VideoPlayer {
             Box::new({
                 let sender = sender.clone();
                 move || {
-                    sender.input(VideoPlayerInput::MouseHide);
+                    sender.input(VideoPlayerInput::HideCursor);
                 }
             }),
         );
@@ -519,38 +520,6 @@ impl Component for VideoPlayer {
             VideoPlayerInput::SetRevealerRevealChild(reveal) => {
                 self.revealer_reveal_child = reveal;
             }
-            VideoPlayerInput::MouseMove(x, y) => {
-                // For some reason mouse move events were getting fired even though the mouse
-                // position didn't change. For now, store the last position so we can check if it
-                // actually moved.
-                if (x, y) != self.last_mouse_position {
-                    self.cursor = None;
-                    self.cursor_debounce.debounce();
-                    self.last_mouse_position = (x, y);
-
-                    if matches!(
-                        CONFIG.read().video_player.on_left_click,
-                        VideoPlayerOnLeftClick::PlayPause
-                    ) && !self.show_controls_locked
-                    {
-                        sender.input(VideoPlayerInput::SetShowControls {
-                            show: true,
-                            locked: self.show_controls_locked,
-                        });
-                    }
-                }
-            }
-            VideoPlayerInput::MouseHide => {
-                self.cursor = gdk::Cursor::from_name("none", None);
-
-                if let VideoPlayerOnLeftClick::PlayPause = CONFIG.read().video_player.on_left_click
-                {
-                    sender.input(VideoPlayerInput::SetShowControls {
-                        show: false,
-                        locked: self.show_controls_locked,
-                    });
-                }
-            }
             VideoPlayerInput::MouseClick(n_press) => match n_press {
                 2 => {
                     if CONFIG.read().video_player.on_left_click == VideoPlayerOnLeftClick::PlayPause
@@ -562,6 +531,7 @@ impl Component for VideoPlayer {
                 1 => match CONFIG.read().video_player.on_left_click {
                     VideoPlayerOnLeftClick::PlayPause => {
                         PLAY_PAUSE_BROKER.send(PlayPauseInput::LeftClick);
+                        sender.input(VideoPlayerInput::ShowCursor);
                     }
                     VideoPlayerOnLeftClick::ToggleControls => {
                         sender.input(VideoPlayerInput::ToggleControls);
@@ -569,6 +539,41 @@ impl Component for VideoPlayer {
                 },
                 _ => {}
             },
+            VideoPlayerInput::MouseMove(x, y) => {
+                // For some reason mouse move events were getting fired even though the mouse
+                // position didn't change. For now, store the last position so we can check if it
+                // actually moved.
+                if (x, y) != self.last_mouse_position {
+                    self.last_mouse_position = (x, y);
+                    sender.input(VideoPlayerInput::ShowCursor);
+                }
+            }
+            VideoPlayerInput::ShowCursor => {
+                self.cursor = None;
+                self.cursor_debounce.debounce();
+
+                if matches!(
+                    CONFIG.read().video_player.on_left_click,
+                    VideoPlayerOnLeftClick::PlayPause
+                ) && !self.show_controls_locked
+                {
+                    sender.input(VideoPlayerInput::SetShowControls {
+                        show: true,
+                        locked: self.show_controls_locked,
+                    });
+                }
+            }
+            VideoPlayerInput::HideCursor => {
+                self.cursor = gdk::Cursor::from_name("none", None);
+
+                if let VideoPlayerOnLeftClick::PlayPause = CONFIG.read().video_player.on_left_click
+                {
+                    sender.input(VideoPlayerInput::SetShowControls {
+                        show: false,
+                        locked: self.show_controls_locked,
+                    });
+                }
+            }
         }
 
         self.update_view(widgets, sender);
