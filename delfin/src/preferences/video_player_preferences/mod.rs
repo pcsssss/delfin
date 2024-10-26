@@ -5,7 +5,8 @@ use relm4::prelude::*;
 
 use crate::{
     config::video_player_config::{
-        VideoPlayerBackendPreference, VideoPlayerConfig, VideoPlayerOnLeftClick,
+        MpvHardwareDecoding, VideoPlayerBackendPreference, VideoPlayerConfig,
+        VideoPlayerOnLeftClick,
     },
     globals::CONFIG,
     tr,
@@ -30,6 +31,8 @@ pub enum VideoPlayerPreferencesInput {
     IntroSkipperAutoSkip(bool),
     Jellyscrub(bool),
 
+    MpvHardwareDecoding(u32),
+    MpvHardwareDecodingCustom(String),
     Backend(u32),
     HlsPlayback(bool),
 }
@@ -150,6 +153,37 @@ impl Component for VideoPlayerPreferences {
             add = &adw::PreferencesGroup {
                 set_title: tr!("prefs-vp-other"),
 
+                add = &adw::ComboRow {
+                    set_title: tr!("prefs-vp-mpv-hwdec.title"),
+                    set_subtitle: tr!("prefs-vp-mpv-hwdec.subtitle", {
+                        "mpvManualUrl" => "https://mpv.io/manual/master/#options-hwdec",
+                    }),
+                    set_use_markup: true,
+                    #[wrap(Some)]
+                    set_model = &gtk::StringList::new(&[
+                        tr!("prefs-vp-mpv-hwdec-options.auto"),
+                        tr!("prefs-vp-mpv-hwdec-options.auto-copy"),
+                        tr!("prefs-vp-mpv-hwdec-options.auto-safe"),
+                        tr!("prefs-vp-mpv-hwdec-options.custom"),
+                        tr!("prefs-vp-mpv-hwdec-options.off"),
+                    ]),
+                    set_selected: video_player_config.mpv_prefs.hardware_decoding.clone().into(),
+                    connect_selected_notify[sender] => move |cb| {
+                        sender.input(VideoPlayerPreferencesInput::MpvHardwareDecoding(cb.selected()));
+                    },
+                },
+
+                add = &adw::EntryRow {
+                    set_title: "Custom hardware decoding option",
+                    #[watch]
+                    set_visible: matches!(model.video_player_config.mpv_prefs.hardware_decoding, MpvHardwareDecoding::Custom),
+                    set_show_apply_button: true,
+                    set_text: &model.video_player_config.mpv_prefs.hardware_decoding_custom,
+                    connect_apply[sender] => move |entry| {
+                        sender.input(VideoPlayerPreferencesInput::MpvHardwareDecodingCustom(entry.text().to_string()));
+                    },
+                },
+
                 add = &adw::ExpanderRow {
                     set_title: tr!("prefs-vp-experimental.title"),
                     set_subtitle: tr!("prefs-vp-experimental.subtitle"),
@@ -244,6 +278,12 @@ impl Component for VideoPlayerPreferences {
                 config.video_player.jellyscrub = jellyscrub;
             }
 
+            VideoPlayerPreferencesInput::MpvHardwareDecoding(mpv_hardware_decoding) => {
+                config.video_player.mpv_prefs.hardware_decoding = mpv_hardware_decoding.into()
+            }
+            VideoPlayerPreferencesInput::MpvHardwareDecodingCustom(value) => {
+                config.video_player.mpv_prefs.hardware_decoding_custom = value;
+            }
             VideoPlayerPreferencesInput::Backend(index) => {
                 config.video_player.backend = match index {
                     0 => VideoPlayerBackendPreference::Mpv,

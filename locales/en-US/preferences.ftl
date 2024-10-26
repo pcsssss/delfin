@@ -105,6 +105,18 @@ prefs-vp-jellyscrub =
 # =====
 
 prefs-vp-other = Other
+prefs-vp-mpv-hwdec =
+    .title = Hardware decoding
+    .subtitle =
+        Hardware decoding can improve playback performance.
+        Choose "{ prefs-vp-mpv-hwdec-options.auto-safe }" or "{ prefs-vp-mpv-hwdec-options.off }" if you're experiencing issues.
+        For more info, refer to the <a href="{ $mpvManualUrl }">MPV manual</a>.
+prefs-vp-mpv-hwdec-options =
+    .auto = Auto
+    .auto-copy = Auto (copy)
+    .auto-safe = Auto (safe)
+    .custom = Custom
+    .off = Off
 prefs-vp-experimental =
     .title = Experimental preferences
     .subtitle =

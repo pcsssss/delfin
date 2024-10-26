@@ -123,6 +123,26 @@ static void *get_proc_address(void *fn_ctx, const gchar *name) {
   return NULL;
 }
 
+mpv_render_param get_render_param_display() {
+  GdkDisplay *display = gdk_display_get_default();
+
+#ifdef GDK_WINDOWING_WAYLAND
+  if (GDK_IS_WAYLAND_DISPLAY(display)) {
+    return (mpv_render_param){MPV_RENDER_PARAM_WL_DISPLAY,
+                              gdk_wayland_display_get_wl_display(display)};
+  }
+#endif
+
+#ifdef GDK_WINDOWING_X11
+  if (GDK_IS_X11_DISPLAY(display)) {
+    return (mpv_render_param){MPV_RENDER_PARAM_X11_DISPLAY,
+                              gdk_x11_display_get_xdisplay(display)};
+  }
+#endif
+
+  return (mpv_render_param){MPV_RENDER_PARAM_INVALID};
+}
+
 gboolean process_events(gpointer data) {
   struct _VpmVideoPlayerMpv *widget = (struct _VpmVideoPlayerMpv *)data;
   int done = 0;
@@ -306,9 +326,9 @@ static void realize(GtkGLArea *area, gpointer data) {
        &(mpv_opengl_init_params){
            .get_proc_address = get_proc_address,
        }},
-
       {MPV_RENDER_PARAM_ADVANCED_CONTROL, &(int){0}},
-      {0}};
+      get_render_param_display(),
+      {MPV_RENDER_PARAM_INVALID}};
 
   mpv_render_context_create(&mpv_ctx->render_context, mpv_ctx->handle, params);
 
@@ -338,6 +358,12 @@ static void vpm_video_player_mpv_init(VpmVideoPlayerMpv *widget) {
   setlocale(LC_NUMERIC, "C");
 
   g_signal_connect(&widget->parent, "realize", G_CALLBACK(realize), widget);
+}
+
+int vpm_video_player_mpv_set_property_string(VpmVideoPlayerMpv *self,
+                                             const char *name,
+                                             const char *value) {
+  return mpv_set_property_string(self->mpv_ctx->handle, name, value);
 }
 
 void vpm_video_player_mpv_play_uri(VpmVideoPlayerMpv *self, const char *uri) {

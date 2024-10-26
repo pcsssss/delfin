@@ -29,6 +29,8 @@ pub struct VideoPlayerConfig {
 
     pub backend: VideoPlayerBackendPreference,
     pub hls_playback: bool,
+
+    pub mpv_prefs: MpvPrefs,
 }
 
 impl Default for VideoPlayerConfig {
@@ -50,6 +52,8 @@ impl Default for VideoPlayerConfig {
             intro_skipper: true,
             intro_skipper_auto_skip: true,
             jellyscrub: true,
+
+            mpv_prefs: MpvPrefs::default(),
         }
     }
 }
@@ -122,6 +126,55 @@ impl DurationDisplay {
         match self {
             Self::Total => Self::Remaining,
             Self::Remaining => Self::Total,
+        }
+    }
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq)]
+pub struct MpvPrefs {
+    pub hardware_decoding: MpvHardwareDecoding,
+    // We store the custom string separately so the user doesn't lose it when swapping between the
+    // available options
+    pub hardware_decoding_custom: String,
+}
+
+#[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq)]
+pub enum MpvHardwareDecoding {
+    Auto = 0,
+    AutoCopy,
+    #[default]
+    AutoSafe,
+    Custom,
+    Off,
+}
+
+impl From<u32> for MpvHardwareDecoding {
+    fn from(value: u32) -> Self {
+        match value {
+            0 => Self::Auto,
+            1 => Self::AutoCopy,
+            2 => Self::AutoSafe,
+            3 => Self::Custom,
+            4 => Self::Off,
+            _ => unreachable!("Hardare decoding option {value} does not exist"),
+        }
+    }
+}
+
+impl From<MpvHardwareDecoding> for u32 {
+    fn from(value: MpvHardwareDecoding) -> Self {
+        value as u32
+    }
+}
+
+impl MpvPrefs {
+    pub fn get_hardware_decoding(&self) -> String {
+        match self.hardware_decoding {
+            MpvHardwareDecoding::Auto => "auto".into(),
+            MpvHardwareDecoding::AutoCopy => "auto-copy".into(),
+            MpvHardwareDecoding::AutoSafe => "auto-safe".into(),
+            MpvHardwareDecoding::Custom => self.hardware_decoding_custom.to_owned(),
+            MpvHardwareDecoding::Off => "no".into(),
         }
     }
 }

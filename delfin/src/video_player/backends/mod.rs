@@ -1,5 +1,6 @@
-use std::fmt;
+use std::{any::Any, cell::RefCell, fmt, sync::Arc};
 
+use mpv::VideoPlayerBackendMpv;
 use relm4::gtk;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -32,7 +33,9 @@ pub enum PlayerState {
 
 type PlayerStateChangedCallback = Box<dyn Fn(PlayerState)>;
 
-pub trait VideoPlayerBackend: fmt::Debug {
+pub trait VideoPlayerBackend: Any + fmt::Debug {
+    fn as_any(&self) -> &dyn Any;
+
     /// Returns widget that renders the video.
     fn widget(&self) -> &gtk::Widget;
 
@@ -199,4 +202,14 @@ impl From<VideoPlayerSubtitleFont> for relm4::gtk::pango::FontDescription {
         });
         desc
     }
+}
+
+pub fn with_backend_mpv<F, T>(
+    backend: &Arc<RefCell<dyn VideoPlayerBackend>>,
+    callback: F,
+) -> Option<T>
+where
+    F: FnOnce(&VideoPlayerBackendMpv) -> T,
+{
+    backend.borrow().as_any().downcast_ref().map(callback)
 }

@@ -134,6 +134,17 @@ impl VideoPlayerMpv {
         }
     }
 
+    #[doc(alias = "vpm_video_player_mpv_set_property_string")]
+    pub fn set_property_string(&self, name: &str, value: &str) -> i32 {
+        unsafe {
+            ffi::vpm_video_player_mpv_set_property_string(
+                self.to_glib_none().0,
+                name.to_glib_none().0,
+                value.to_glib_none().0,
+            )
+        }
+    }
+
     #[doc(alias = "vpm_video_player_mpv_set_subtitle_background_colour")]
     pub fn set_subtitle_background_colour(&self, colour: &str) {
         unsafe {

@@ -17,6 +17,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use adw::prelude::*;
+use backends::with_backend_mpv;
 use gtk::gdk;
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::component::{AsyncComponent, AsyncComponentController, AsyncController};
@@ -648,6 +649,13 @@ impl VideoPlayer {
         );
         player.set_subtitle_position(video_player_config.subtitles.position);
         player.set_subtitle_font(&video_player_config.subtitles.font);
+
+        with_backend_mpv(&self.backend, |mpv| {
+            mpv.set_property_string(
+                "hwdec",
+                &video_player_config.mpv_prefs.get_hardware_decoding(),
+            );
+        });
     }
 
     fn set_player_state(&mut self, new_state: PlayerState) {

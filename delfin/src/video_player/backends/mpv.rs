@@ -6,7 +6,7 @@ use std::{
 
 use glib::SignalHandlerId;
 use relm4::gtk::{self, glib, prelude::*};
-use tracing::debug;
+use tracing::{debug, error};
 use uuid::Uuid;
 use video_player_mpv::{Track, TrackType, VideoPlayerMpv};
 
@@ -113,9 +113,20 @@ impl VideoPlayerBackendMpv {
     fn set_player_state(&mut self, state: PlayerState) {
         set_player_state!(self.state, self.player_state_changed_callbacks, state);
     }
+
+    pub fn set_property_string(&self, name: &str, value: &str) {
+        let res = self.widget.set_property_string(name, value);
+        if res != 0 {
+            error!("Error setting property {name} to {value}: {res}");
+        }
+    }
 }
 
 impl VideoPlayerBackend for VideoPlayerBackendMpv {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
     fn widget(&self) -> &gtk::Widget {
         self.widget.upcast_ref()
     }

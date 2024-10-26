@@ -24,6 +24,10 @@ impl Default for VideoPlayerBackendGst {
 }
 
 impl VideoPlayerBackend for VideoPlayerBackendGst {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
     fn widget(&self) -> &libadwaita::gtk::Widget {
         self.player.upcast_ref()
     }

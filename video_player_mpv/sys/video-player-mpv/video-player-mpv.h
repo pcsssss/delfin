@@ -12,6 +12,10 @@ G_DECLARE_FINAL_TYPE(VpmVideoPlayerMpv, vpm_video_player_mpv, VPM,
 
 GtkWidget *vpm_video_player_mpv_new();
 
+int vpm_video_player_mpv_set_property_string(VpmVideoPlayerMpv *self,
+                                             const char *name,
+                                             const char *value);
+
 void vpm_video_player_mpv_play_uri(VpmVideoPlayerMpv *self, const char *uri);
 void vpm_video_player_mpv_play(VpmVideoPlayerMpv *self);
 void vpm_video_player_mpv_pause(VpmVideoPlayerMpv *self);

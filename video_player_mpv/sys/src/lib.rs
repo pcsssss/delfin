@@ -149,6 +149,11 @@ extern "C" {
         self_: *mut VpmVideoPlayerMpv,
         playback_speed: c_double,
     );
+    pub fn vpm_video_player_mpv_set_property_string(
+        self_: *mut VpmVideoPlayerMpv,
+        name: *const c_char,
+        value: *const c_char,
+    ) -> c_int;
     pub fn vpm_video_player_mpv_set_subtitle_background_colour(
         self_: *mut VpmVideoPlayerMpv,
         colour: *mut c_char,
