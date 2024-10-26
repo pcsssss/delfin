@@ -153,6 +153,14 @@ impl<F: Fetcher + Send + Sync + 'static> MediaFetcher<F> {
     }
 }
 
+impl<F: Fetcher + Send + Sync> Drop for MediaFetcher<F> {
+    fn drop(&mut self) {
+        if let Some(fetch_handle) = &self.fetch_handle {
+            fetch_handle.abort();
+        }
+    }
+}
+
 pub trait Fetcher {
     fn fetch(
         &self,

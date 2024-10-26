@@ -414,9 +414,11 @@ impl Component for Library {
                     widgets.view_stack.set_visible_child_name("search");
                 } else {
                     let previous_stack_child = self.previous_stack_child.read().unwrap();
-                    widgets
-                        .view_stack
-                        .set_visible_child_name(&previous_stack_child);
+                    if let Some(previous_stack_child) =
+                        widgets.view_stack.child_by_name(&previous_stack_child)
+                    {
+                        widgets.view_stack.set_visible_child(&previous_stack_child);
+                    }
                 }
             }
             LibraryInput::ShowSearch => {
@@ -505,6 +507,9 @@ impl Library {
                 user_views: user_views.clone(),
             })
             .detach();
+        if let Some(prev_home) = self.home.take() {
+            view_stack.remove(prev_home.widget());
+        }
         view_stack.add_titled_with_icon(
             home.widget(),
             Some("home"),
@@ -518,14 +523,15 @@ impl Library {
         let collections = Collections::builder()
             .launch(self.api_client.clone())
             .detach();
-
+        if let Some(prev_collections) = self.collections.take() {
+            view_stack.remove(prev_collections.widget());
+        }
         view_stack.add_titled_with_icon(
             collections.widget(),
             Some("collections"),
             tr!("library-page-collections-title"),
             "library",
         );
-
         self.collections = Some(collections);
     }
 }
