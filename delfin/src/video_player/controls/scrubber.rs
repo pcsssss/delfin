@@ -1,11 +1,10 @@
-use bytes::Buf;
 use chrono::TimeDelta;
 use jellyfin_api::types::ChapterInfo;
 use std::{cell::RefCell, sync::Arc};
 use tracing::warn;
 
 use gdk::{Rectangle, Texture};
-use gtk::{gdk, gdk_pixbuf, prelude::*};
+use gtk::{gdk, glib, prelude::*};
 use relm4::prelude::*;
 
 use crate::{
@@ -138,6 +137,7 @@ impl Component for Scrubber {
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 4,
 
+                    #[name = "thumbnail"]
                     gtk::Picture {
                         add_css_class: "scrubber-popover-thumbnail",
                         #[watch]
@@ -285,6 +285,8 @@ impl Component for Scrubber {
                     thumbnail: self.get_thumbnail(timestamp),
                     chapter: self.get_chapter(timestamp),
                 });
+                // Force thumbnail redraw or it won't update sometimes
+                widgets.thumbnail.queue_draw();
             }
             ScrubberInput::ScrubberMouseLeave => {
                 self.popover = None;
@@ -338,16 +340,14 @@ impl Scrubber {
             warn!("Error getting trickplay thumbnail");
             return None;
         };
-        let pixbuf = match gdk_pixbuf::Pixbuf::from_read(image.clone().reader()) {
-            Ok(pixbuf) => pixbuf,
-            Err(err) => {
+        Texture::from_bytes(&glib::Bytes::from(image))
+            .map_err(|err| {
                 warn!(
-                    "Error creating pixbuf for scrubber thumbnail at timestamp {timestamp}: {err}"
+                    "Error creating texture for scrubber thumbnail at timestamp {timestamp}: {err}"
                 );
-                return None;
-            }
-        };
-        Some(Texture::for_pixbuf(&pixbuf))
+                err
+            })
+            .ok()
     }
 
     fn get_chapter(&self, timestamp: usize) -> Option<Chapter> {
