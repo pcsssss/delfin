@@ -285,6 +285,32 @@ impl VideoPlayerMpv {
         }
     }
 
+    #[doc(alias = "current-hwdec")]
+    pub fn connect_current_hwdec<F: Fn(&Self, &str) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn current_hwdec_trampoline<F: Fn(&VideoPlayerMpv, &str) + 'static>(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            object: *mut libc::c_char,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(
+                &from_glib_borrow(this),
+                &glib::GString::from_glib_borrow(object),
+            )
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"current-hwdec\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    current_hwdec_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
+    }
+
     #[doc(alias = "duration-updated")]
     pub fn connect_duration_updated<F: Fn(&Self, f64) + 'static>(&self, f: F) -> SignalHandlerId {
         unsafe extern "C" fn duration_updated_trampoline<F: Fn(&VideoPlayerMpv, f64) + 'static>(

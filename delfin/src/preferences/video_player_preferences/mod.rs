@@ -161,13 +161,13 @@ impl Component for VideoPlayerPreferences {
                     set_use_markup: true,
                     #[wrap(Some)]
                     set_model = &gtk::StringList::new(&[
-                        tr!("prefs-vp-mpv-hwdec-options.auto"),
-                        tr!("prefs-vp-mpv-hwdec-options.auto-copy"),
-                        tr!("prefs-vp-mpv-hwdec-options.auto-safe"),
-                        tr!("prefs-vp-mpv-hwdec-options.custom"),
-                        tr!("prefs-vp-mpv-hwdec-options.off"),
+                        &MpvHardwareDecoding::Auto.label(),
+                        &MpvHardwareDecoding::AutoCopy.label(),
+                        &MpvHardwareDecoding::AutoSafe.label(),
+                        &MpvHardwareDecoding::Custom.label(),
+                        &MpvHardwareDecoding::Off.label(),
                     ]),
-                    set_selected: video_player_config.mpv_prefs.hardware_decoding.clone().into(),
+                    set_selected: video_player_config.mpv_prefs.hardware_decoding.into(),
                     connect_selected_notify[sender] => move |cb| {
                         sender.input(VideoPlayerPreferencesInput::MpvHardwareDecoding(cb.selected()));
                     },

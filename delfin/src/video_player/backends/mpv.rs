@@ -120,6 +120,15 @@ impl VideoPlayerBackendMpv {
             error!("Error setting property {name} to {value}: {res}");
         }
     }
+
+    pub fn connect_current_hwdec_updated(
+        &self,
+        callback: Box<dyn Fn(&str) + Send + Sync + 'static>,
+    ) {
+        self.widget.connect_current_hwdec(move |_, val| {
+            callback(val);
+        });
+    }
 }
 
 impl VideoPlayerBackend for VideoPlayerBackendMpv {

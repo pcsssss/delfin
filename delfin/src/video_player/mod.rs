@@ -18,6 +18,7 @@ use std::time::Duration;
 
 use adw::prelude::*;
 use backends::with_backend_mpv;
+use controls::video_player_menu::{VideoPlayerMenuInput, VIDEO_PLAYER_MENU_BROKER};
 use gtk::gdk;
 use jellyfin_api::types::{BaseItemDto, BaseItemKind};
 use relm4::component::{AsyncComponent, AsyncComponentController, AsyncController};
@@ -380,6 +381,7 @@ impl Component for VideoPlayer {
                 let url = api_client.get_stream_url(&item.id.unwrap());
                 info!("Playing video from URL: {url}");
                 self.backend.borrow_mut().play_uri(&url);
+                VIDEO_PLAYER_MENU_BROKER.send(VideoPlayerMenuInput::SetStreamURL(url));
 
                 if let Some(playback_position_ticks) = item
                     .user_data

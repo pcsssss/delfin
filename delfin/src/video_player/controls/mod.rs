@@ -6,6 +6,7 @@ pub(super) mod playback_speed;
 pub(super) mod scrubber;
 pub(super) mod skip_forwards_backwards;
 pub(super) mod subtitles;
+pub(super) mod video_player_menu;
 pub(super) mod volume;
 
 use std::{
@@ -39,6 +40,7 @@ use gtk::prelude::*;
 use jellyfin_api::types::BaseItemDto;
 use playback_speed::PLAYBACK_SPEED_BROKER;
 use relm4::{gtk, Component, ComponentController, ComponentParts, Controller, SimpleComponent};
+use video_player_menu::{VideoPlayerMenu, VIDEO_PLAYER_MENU_BROKER};
 
 use self::{
     audio_tracks::{AudioTracks, AudioTracksInput},
@@ -69,6 +71,7 @@ pub struct VideoPlayerControls {
     audio_tracks: OnceCell<Controller<AudioTracks>>,
     fullscreen: Option<Controller<Fullscreen>>,
     playback_speed: OnceCell<Controller<PlaybackSpeed>>,
+    menu: OnceCell<Controller<VideoPlayerMenu>>,
 }
 
 pub struct VideoPlayerControlsInit {
@@ -150,6 +153,7 @@ impl SimpleComponent for VideoPlayerControls {
             audio_tracks: OnceCell::new(),
             fullscreen: None,
             playback_speed: OnceCell::new(),
+            menu: OnceCell::new(),
         };
 
         let widgets = view_output!();
@@ -165,6 +169,7 @@ impl SimpleComponent for VideoPlayerControls {
         NEXT_EPISODE_BROKER.reset();
         SUBTITLES_BROKER.reset();
         VOLUME_BROKER.reset();
+        VIDEO_PLAYER_MENU_BROKER.reset();
 
         let scrubber = Scrubber::builder()
             .launch_with_broker(player.clone(), &SCRUBBER_BROKER.read())
@@ -222,6 +227,12 @@ impl SimpleComponent for VideoPlayerControls {
         // Push remaining controls to end
         second_row.append(&gtk::Box::builder().hexpand(true).build());
 
+        let menu = VideoPlayerMenu::builder()
+            .launch_with_broker(player.clone(), &VIDEO_PLAYER_MENU_BROKER.read())
+            .detach();
+        second_row.append(menu.widget());
+        model.menu.set(menu).unwrap();
+
         let playback_speed = PlaybackSpeed::builder()
             .launch_with_broker(player.clone(), &PLAYBACK_SPEED_BROKER.read())
             .detach();
@@ -239,7 +250,7 @@ impl SimpleComponent for VideoPlayerControls {
         model.audio_tracks.set(audio_tracks).unwrap();
 
         let volume = Volume::builder()
-            .launch_with_broker(player, &VOLUME_BROKER.read())
+            .launch_with_broker(player.clone(), &VOLUME_BROKER.read())
             .detach();
         second_row.append(volume.widget());
         model.volume = Some(volume);

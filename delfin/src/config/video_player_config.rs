@@ -1,8 +1,10 @@
 use std::{cell::RefCell, sync::Arc};
 
+use relm4::gtk::glib;
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    tr,
     utils::round::round_one_place,
     video_player::backends::{
         mpv::VideoPlayerBackendMpv, VideoPlayerBackend, VideoPlayerSubtitleFont,
@@ -138,7 +140,7 @@ pub struct MpvPrefs {
     pub hardware_decoding_custom: String,
 }
 
-#[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, Clone, Copy, PartialEq, glib::Variant)]
 pub enum MpvHardwareDecoding {
     Auto = 0,
     AutoCopy,
@@ -146,6 +148,18 @@ pub enum MpvHardwareDecoding {
     AutoSafe,
     Custom,
     Off,
+}
+
+impl MpvHardwareDecoding {
+    pub fn label(self) -> String {
+        match self {
+            Self::Auto => tr!("prefs-vp-mpv-hwdec-options.auto").into(),
+            Self::AutoCopy => tr!("prefs-vp-mpv-hwdec-options.auto-copy").into(),
+            Self::AutoSafe => tr!("prefs-vp-mpv-hwdec-options.auto-safe").into(),
+            Self::Custom => tr!("prefs-vp-mpv-hwdec-options.custom").into(),
+            Self::Off => tr!("prefs-vp-mpv-hwdec-options.off").into(),
+        }
+    }
 }
 
 impl From<u32> for MpvHardwareDecoding {
