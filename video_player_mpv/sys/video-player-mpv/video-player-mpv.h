@@ -1,6 +1,5 @@
 #pragma once
 
-#include "video-player-mpv/track.h"
 #include <gtk/gtk.h>
 #include <stdbool.h>
 #include <sys/types.h>

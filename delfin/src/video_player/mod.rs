@@ -652,6 +652,8 @@ impl VideoPlayer {
         player.set_subtitle_position(video_player_config.subtitles.position);
         player.set_subtitle_font(&video_player_config.subtitles.font);
 
+        player.set_deinterlace(video_player_config.deinterlace);
+
         with_backend_mpv(&self.backend, |mpv| {
             mpv.set_property_string(
                 "hwdec",

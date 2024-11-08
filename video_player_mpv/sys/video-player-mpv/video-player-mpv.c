@@ -34,6 +34,7 @@ enum {
   SIGNAL_CORE_IDLE,
   SIGNAL_CURRENT_AO,
   SIGNAL_CURRENT_HWDEC,
+  SIGNAL_DEINTERLACE_ACTIVE,
   SIGNAL_PAUSE,
   SIGNAL_LAST,
 };
@@ -100,6 +101,9 @@ static void vpm_video_player_mpv_class_init(VpmVideoPlayerMpvClass *klass) {
   signals[SIGNAL_CURRENT_HWDEC] =
       g_signal_new("current-hwdec", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST,
                    0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_STRING);
+  signals[SIGNAL_DEINTERLACE_ACTIVE] = g_signal_new(
+      "deinterlace_active", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0,
+      NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
   signals[SIGNAL_PAUSE] =
       g_signal_new("pause", G_TYPE_FROM_CLASS(klass), G_SIGNAL_RUN_LAST, 0,
                    NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_BOOLEAN);
@@ -226,6 +230,8 @@ gboolean process_events(gpointer data) {
           g_signal_emit(widget, signals[SIGNAL_CORE_IDLE], 0, val);
         } else if (strcmp(prop->name, "pause") == 0) {
           g_signal_emit(widget, signals[SIGNAL_PAUSE], 0, val);
+        } else if (strcmp(prop->name, "deinterlace-active") == 0) {
+          g_signal_emit(widget, signals[SIGNAL_DEINTERLACE_ACTIVE], 0, val);
         }
       }
 
@@ -353,6 +359,8 @@ static void realize(GtkGLArea *area, gpointer data) {
   mpv_observe_property(mpv_ctx->handle, 0, "core-idle", MPV_FORMAT_FLAG);
   mpv_observe_property(mpv_ctx->handle, 0, "current-ao", MPV_FORMAT_STRING);
   mpv_observe_property(mpv_ctx->handle, 0, "hwdec-current", MPV_FORMAT_STRING);
+  mpv_observe_property(mpv_ctx->handle, 0, "deinterlace-active",
+                       MPV_FORMAT_FLAG);
   mpv_observe_property(mpv_ctx->handle, 0, "pause", MPV_FORMAT_FLAG);
 
   g_signal_connect(&widget->parent, "render", G_CALLBACK(render), mpv_ctx);

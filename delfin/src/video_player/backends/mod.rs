@@ -5,7 +5,7 @@ use relm4::gtk;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::utils::rgba::RGBA;
+use crate::{config::video_player_config::Deinterlace, utils::rgba::RGBA};
 
 #[cfg(feature = "gst")]
 pub mod gst;
@@ -90,6 +90,9 @@ pub trait VideoPlayerBackend: Any + fmt::Debug {
     /// Set the playback speed.
     fn set_playback_speed(&self, playback_speed: f64);
 
+    /// Set deinterlacing.
+    fn set_deinterlace(&self, deinterlace: Deinterlace);
+
     /// Get the current subtitle track ID.
     fn current_subtitle_track(&self) -> Option<usize>;
 
@@ -158,6 +161,12 @@ pub trait VideoPlayerBackend: Any + fmt::Debug {
     fn connect_audio_tracks_updated(
         &mut self,
         callback: Box<dyn Fn(Vec<AudioTrack>) + Send + Sync + 'static>,
+    ) -> Uuid;
+
+    /// Get notified when deinterlacing is activated or deactivated.
+    fn connect_deinterlace_active_updated(
+        &mut self,
+        callback: Box<dyn Fn(bool) + Send + Sync + 'static>,
     ) -> Uuid;
 
     // Disconnects the signal handler for the given ID.

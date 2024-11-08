@@ -10,6 +10,7 @@ use super::controls::{
         SkipForwardsBackwardsInput, SKIP_BACKWARDS_BROKER, SKIP_FORWARDS_BROKER,
     },
     subtitles::{SubtitlesInput, SUBTITLES_BROKER},
+    video_player_menu::{VideoPlayerMenuInput, VIDEO_PLAYER_MENU_BROKER},
     volume::{VolumeInput, VOLUME_BROKER},
 };
 
@@ -60,6 +61,9 @@ pub fn keybindings_controller() -> EventControllerKey {
             // Right angle bracket/Shift + .
             gdk::Key::greater => {
                 PLAYBACK_SPEED_BROKER.send(PlaybackSpeedInput::SpeedUp);
+            }
+            gdk::Key::d => {
+                VIDEO_PLAYER_MENU_BROKER.send(VideoPlayerMenuInput::ToggleDeinterlacing);
             }
             _ => return Propagation::Proceed,
         };

@@ -311,6 +311,34 @@ impl VideoPlayerMpv {
         }
     }
 
+    #[doc(alias = "deinterlace-active")]
+    pub fn connect_deinterlace_active<F: Fn(&Self, bool) + 'static>(
+        &self,
+        f: F,
+    ) -> SignalHandlerId {
+        unsafe extern "C" fn deinterlace_active_trampoline<
+            F: Fn(&VideoPlayerMpv, bool) + 'static,
+        >(
+            this: *mut ffi::VpmVideoPlayerMpv,
+            object: glib::ffi::gboolean,
+            f: glib::ffi::gpointer,
+        ) {
+            let f: &F = &*(f as *const F);
+            f(&from_glib_borrow(this), from_glib(object))
+        }
+        unsafe {
+            let f: Box_<F> = Box_::new(f);
+            connect_raw(
+                self.as_ptr() as *mut _,
+                b"deinterlace-active\0".as_ptr() as *const _,
+                Some(std::mem::transmute::<_, unsafe extern "C" fn()>(
+                    deinterlace_active_trampoline::<F> as *const (),
+                )),
+                Box_::into_raw(f),
+            )
+        }
+    }
+
     #[doc(alias = "duration-updated")]
     pub fn connect_duration_updated<F: Fn(&Self, f64) + 'static>(&self, f: F) -> SignalHandlerId {
         unsafe extern "C" fn duration_updated_trampoline<F: Fn(&VideoPlayerMpv, f64) + 'static>(

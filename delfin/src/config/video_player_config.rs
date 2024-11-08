@@ -31,6 +31,7 @@ pub struct VideoPlayerConfig {
 
     pub backend: VideoPlayerBackendPreference,
     pub hls_playback: bool,
+    pub deinterlace: Deinterlace,
 
     pub mpv_prefs: MpvPrefs,
 }
@@ -49,11 +50,13 @@ impl Default for VideoPlayerConfig {
 
             subtitles: VideoPlayerSubtitlesConfig::default(),
 
-            backend: VideoPlayerBackendPreference::default(),
-            hls_playback: false,
             intro_skipper: true,
             intro_skipper_auto_skip: true,
             jellyscrub: true,
+
+            backend: VideoPlayerBackendPreference::default(),
+            hls_playback: false,
+            deinterlace: Deinterlace::default(),
 
             mpv_prefs: MpvPrefs::default(),
         }
@@ -130,6 +133,14 @@ impl DurationDisplay {
             Self::Remaining => Self::Total,
         }
     }
+}
+
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, glib::Variant)]
+pub enum Deinterlace {
+    Auto,
+    On,
+    #[default]
+    Off,
 }
 
 #[derive(Debug, Default, Deserialize, Serialize, Clone, PartialEq)]

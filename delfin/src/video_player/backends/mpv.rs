@@ -13,8 +13,8 @@ use video_player_mpv::{Track, TrackType, VideoPlayerMpv};
 use crate::{tr, utils::rgba::RGBA};
 
 use super::{
-    AudioTrack, PlayerState, PlayerStateChangedCallback, SubtitleTrack, VideoPlayerBackend,
-    VideoPlayerSubtitleFont,
+    AudioTrack, Deinterlace, PlayerState, PlayerStateChangedCallback, SubtitleTrack,
+    VideoPlayerBackend, VideoPlayerSubtitleFont,
 };
 
 fn uuid() -> Uuid {
@@ -214,6 +214,17 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
         self.widget.set_playback_speed(playback_speed);
     }
 
+    fn set_deinterlace(&self, deinterlace: Deinterlace) {
+        self.widget.set_property_string(
+            "deinterlace",
+            match deinterlace {
+                Deinterlace::Auto => "auto",
+                Deinterlace::On => "yes",
+                Deinterlace::Off => "no",
+            },
+        );
+    }
+
     fn current_subtitle_track(&self) -> Option<usize> {
         match self.widget.current_subtitle_track() {
             id @ 0.. => Some(id as usize),
@@ -389,6 +400,21 @@ impl VideoPlayerBackend for VideoPlayerBackendMpv {
                     }
 
                     callback(audio_tracks);
+                }),
+        );
+        id
+    }
+
+    fn connect_deinterlace_active_updated(
+        &mut self,
+        callback: Box<dyn Fn(bool) + Send + Sync + 'static>,
+    ) -> Uuid {
+        let id = uuid();
+        self.signal_handler_ids.insert(
+            id,
+            self.widget
+                .connect_deinterlace_active(move |_, deinterlace_active| {
+                    callback(deinterlace_active);
                 }),
         );
         id
