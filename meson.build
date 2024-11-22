@@ -1,7 +1,7 @@
 project(
   'delfin',
   'rust',
-  version: '0.4.7',
+  version: '0.4.8',
   # bad hack to compile libvideo-player-mpv
   subproject_dir: 'video_player_mpv',
   meson_version: '>= 0.59',

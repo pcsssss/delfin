@@ -85,6 +85,21 @@
   </provides>
 
   <releases>
+    <release version="0.4.8" date="2024-11-22">
+      <description>
+        <ul>
+          <li>Added an overflow menu to the video player. This menu allows you to modify deinterlacing and hardware decoding options, along with accessing keyboard shortcuts and debug info.</li>
+          <li>Added a hardware decoding preference.</li>
+          <li>Added deinterlacing to video player.</li>
+          <li>Fixed a video player crash on Wayland with some GTK versions.</li>
+          <li>Fixed video sometimes flickering during loading and seeking.</li>
+          <li>Fixed the video going black if you resize the window while it's paused.</li>
+          <li>Fixed trickplay thumbnails sometimes not updating properly with native trickplay.</li>
+          <li>Translation updates from Weblate - thanks to divergency, Fjuro, gallegonovato, kilaketia, Outbreak2096, smrtrfszm, Tuba2, and Vistaus.</li>
+        </ul>
+      </description>
+    </release>
+
     <release version="0.4.7" date="2024-10-07">
       <description>
         <ul>
