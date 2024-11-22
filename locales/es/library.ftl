@@ -1,11 +1,12 @@
 library-series-and-episode-name = { $seriesName } - { $episodeName }
 library-section-title =
-    .continue-watching = Seguir viendo
-    .next-up = Siguiente
+    .continue-watching = Continuar viendo
+    .next-up = Siguiente Arriba
     .latest-movies = Últimas películas
-    .latest-shows = Últimos programas
-    .latest-music = Última música
-    .my-media = Mis medios
+    .latest-shows = Últimos espectáculos
+    .latest-music = Música más reciente
+    .my-media = Mi medio
+    .latest-in = Última entrada { $name }
 library-media-tile-unnamed-item = Elemento sin nombre
 library-refresh-button = Actualizar biblioteca
 library-loading = Cargando tu biblioteca…

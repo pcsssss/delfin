@@ -21,3 +21,4 @@ sc-lib = Verzameling
 sc-lib-refresh = Herladen
 sc-gen-menu = Menu openen
 sc-vp-playback-speed = Afspeelsnelheid aanpassen
+sc-vp-deinterlace = Deinterlacing aan/uit

@@ -92,3 +92,15 @@ prefs-general-restore-most-recent =
 prefs-general-use-episode-image =
     .title = Použít obrázky epizod v sekcích Další díly a Pokračujte ve sledování
     .subtitle = Sekce Další díly a Pokračujte ve sledování budou používat obrázky epizod jako náhledy namísto primárního náhledu seriálu.
+prefs-vp-mpv-hwdec-options =
+    .auto = Automaticky
+    .auto-copy = Automaticky (kopie)
+    .auto-safe = Automaticky (bezpečný)
+    .custom = Vlastní
+    .off = Vypnuto
+prefs-vp-mpv-hwdec =
+    .title = Hardwarové dekódování
+    .subtitle =
+        Hardwarové dekódování můe zlepšit výkon přehrávání.
+        Zvolte „{ prefs-vp-mpv-hwdec-options.auto-safe }“ nebo „{ prefs-vp-mpv-hwdec-options.off }“, pokud jste narazili problémy.
+        Pro další informace navštivte <a href="{ $mpvManualUrl }">manuál MPV</a>.

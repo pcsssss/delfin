@@ -6,6 +6,7 @@ library-section-title =
     .latest-shows = Legújabb sorozatok
     .latest-music = Legújabb zenék
     .my-media = Saját médiatár
+    .latest-in = Legújabb { $name }
 library-search-title = Találatok erre: “{ $searchText }”
 library-offline =
     .title = Nem sikerült csatlakozni a szerverhez

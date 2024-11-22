@@ -35,12 +35,11 @@ prefs-vp-subs-style-ass-warning =
     Estos ajustes no se aplican a los subtítulos ASS/SSA.
     Para los subtítulos ASS/SSA, consulta "{ prefs-vp-subs-more }".
 prefs-vp-jellyscrub =
-    .title =
-        complemento Jellyscrub.subtitle =
-        Muestra vistas previas al pasar el cursor sobre la barra del reproductor de video.
-        Esta opción requiere un complemento instalado
-        <a href="{ $jellyscrubUrl }"> Jellyscrub </a> en su servidor.
-        En los servidores compatibles, se utilizará el truco nativo Jellyfin.
+    .title = complemento Jellyscrub
+    .subtitle =
+        Mostrar miniaturas al pasar el cursor sobre la barra de progreso del video.
+        Esto requiere que el complemento <a href="{ $jellyscrubUrl }">Jellyscrub</a> esté instalado en su servidor.
+        En los servidores compatibles se utilizará el truco nativo de Jellyfin.
 prefs-vp-on-left-click =
     .title = Al hacer clic con el ratón
     .subtitle = Qué ocurre cuando haces clic con el botón izquierdo del ratón en el reproductor de vídeo
@@ -92,3 +91,15 @@ prefs-general-restore-most-recent =
 prefs-general-use-episode-image =
     .title = Utilizar las imágenes de los episodios en las secciones "Próximamente" y "Seguir viendo
     .subtitle = Las secciones Próximamente y Seguir viendo utilizarán imágenes de episodios como miniaturas en lugar de la miniatura principal del programa.
+prefs-vp-mpv-hwdec-options =
+    .auto = Automático
+    .auto-copy = Automático (copia)
+    .auto-safe = Automático (segura)
+    .custom = Personalizada
+    .off = Apagada
+prefs-vp-mpv-hwdec =
+    .title = Decodificación de hardware
+    .subtitle =
+        La decodificación por hardware puede mejorar el rendimiento de reproducción.
+        Elija "{ prefs-vp-mpv-hwdec-options.auto-safe }" o "{ prefs-vp-mpv-hwdec-options.off }" si tiene problemas.
+        Para obtener más información, consulte el <a href="{ $mpvManualUrl }">manual de MPV</a>.

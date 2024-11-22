@@ -35,7 +35,7 @@ vp-fullscreen-tooltip =
         [true] Teljes képernyő
        *[false] Kilépés a teljes képernyőből
     }
-vp-next-up-starting = A következő epizód { $remaining } másodperc múlva indul
+vp-next-up-starting = A következő epizód { $remaining } másodperc múlva indul…
 vp-next-up-action =
     .play = Lejátszás most
     .hide = Elrejtés
@@ -47,3 +47,4 @@ vp-playback-speed-normal = Normál
 vp-skip-intro =
     .manual = Bevezető átugrása
     .auto = Bevezető átugrása { $seconds } másodperc múlva…
+vp-playback-speed-toast = Lejátszási sebesség: { $speed }x

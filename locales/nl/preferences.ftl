@@ -91,3 +91,15 @@ prefs-general-restore-most-recent =
 prefs-general-use-episode-image =
     .title = Afbeeldingsminiaturen gebruiken in wachtrij en verder kijken
     .subtitle = Gebruik miniaturen van de afleveringen in kwestie in de wachtrij en verder kijken in plaats van de miniatuur van de serie.
+prefs-vp-mpv-hwdec-options =
+    .auto = Automatisch
+    .auto-copy = Automatisch (kopie)
+    .auto-safe = Automatisch (veilig)
+    .custom = Aangepast
+    .off = Uit
+prefs-vp-mpv-hwdec =
+    .title = Hardwareversnelling
+    .subtitle =
+        Hardwareversnelling kan de afspeelprestaties verbeteren.
+        Kies ‘{ prefs-vp-mpv-hwdec-options.auto-safe }’ of ‘{ prefs-vp-mpv-hwdec-options.off }’ als je problemen ervaart.
+        Bekijk voor meer informatie de <a href="{ $mpvManualUrl }">MPV-handleiding</a>.

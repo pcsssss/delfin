@@ -20,3 +20,4 @@ sc-lib = Медиатека
 sc-gen-menu = Открыть меню
 sc-lib-refresh = Обновить
 sc-gen-quit = Закрыть приложение
+sc-vp-playback-speed = Изменить скорость воспроизведения

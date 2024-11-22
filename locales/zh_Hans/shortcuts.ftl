@@ -21,3 +21,4 @@ sc-vp-fullscreen = 切换全屏
 sc-vp-frame-step = 逐帧查找
 sc-vp-seek = 查找
 sc-vp-playback-speed = 调整播放速度
+sc-vp-deinterlace = 切换反交错

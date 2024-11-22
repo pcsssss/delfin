@@ -75,3 +75,29 @@ prefs-vp-intro-skipper-auto-skip =
 prefs-general-restore-most-recent =
     .title = Automatikus bejelentkezés a { app-name } indulásakor
     .subtitle = A legutoljára használt fiókodba leszel beléptetve
+prefs-vp-jellyscrub =
+    .title = Jellyscrub bővítmény
+    .subtitle =
+        Előnézeti képek megjelenítése a pörgetősáv felett.
+        Ehhez szükséges a <a href="{ $jellyscrubUrl }">Jellyscrub</a> bővítményt feltelepíteni a szerveren.
+        Egyébként a Jellyfin beépített Trickplay rendszere lesz használva.
+prefs-general-use-episode-image =
+    .title = Epizód képek használata a Javasoltak és a Megtekintés folytatása részeknél
+    .subtitle = A Javasoltak és a Megtekintés folytatása részeknél az epizódok képei fognak megjelenni az elsődleges képek helyett.
+prefs-vp-mpv-hwdec =
+    .title = Hardwares dekódolás
+    .subtitle =
+        Hardwares dekódolás javítja a visszajátszás teljesítményét.
+        Válaszd a "{ prefs-vp-mpv-hwdec-options.auto-safe }" or "{ prefs-vp-mpv-hwdec-options.off }" beállítást ha problémák merülnek fel.
+        További információért keresed fel az <a href="{ $mpvManualUrl }">MPV kézikönyvét</a>.
+prefs-vp-backend =
+    .title = Videó lejátszó
+    .subtitle = Szükséges a { app-name } újraindítása.
+    .value-mpv = MPV
+    .value-gstreamer = GStreamer
+prefs-vp-mpv-hwdec-options =
+    .auto = Automatikus
+    .auto-copy = Automatikus (másolás)
+    .auto-safe = Automatikus (biztonságos)
+    .custom = Egyedi
+    .off = Ki

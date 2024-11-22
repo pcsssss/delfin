@@ -91,3 +91,15 @@ prefs-vp-subs-more-ass-warning =
         Les sous-titres ASS/SSA comprennent souvent un style et un positionnement spéciaux. La modification de ces préférences peut entraîner un rendu incorrect des sous-titres ASS/SSA.
 
         Si vous souhaitez uniquement modifier le style pour d'autres formats de sous-titres, il est recommandé de modifier les préférences sous "{ prefs-vp-subs-style }" à la place.
+prefs-vp-mpv-hwdec-options =
+    .auto = Automatique
+    .auto-copy = Automatique (copie)
+    .auto-safe = Automatique (sûr)
+    .custom = Custom
+    .off = Désactivé
+prefs-vp-mpv-hwdec =
+    .title = Décodage matériel
+    .subtitle =
+        Le décodage matériel peut améliorer les performances de lecture.
+        Choisissez "{ prefs-vp-mpv-hwdec-options.auto-safe }" ou "{ prefs-vp-mpv-hwdec-options.off }" si vous rencontrez des problèmes.
+        Pour plus d'informations, référez-vous au <a href="{ $mpvManualUrl }">manuel de MPV</a>.

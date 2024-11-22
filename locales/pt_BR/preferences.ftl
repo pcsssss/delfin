@@ -1,6 +1,6 @@
 prefs-vp-on-left-click-options =
-    .play-pause = Reproduzir/pausar vídeo
-    .toggle-controls = Mostrar/ocultar controles
+    .play-pause = Reproduzir/Pausar vídeo
+    .toggle-controls = Mostrar/Ocultar controles
 prefs-vp-experimental =
     .title = Preferências experimentais
     .subtitle =
@@ -91,3 +91,15 @@ prefs-general-restore-most-recent =
 prefs-general-use-episode-image =
     .title = Usar imagens de episódio nas seções A Seguir e Continue Assistindo
     .subtitle = A seções A Seguir e Continue Assistindo usarão imagens de episódio como miniaturas, em vez da miniatura principal da série..
+prefs-vp-mpv-hwdec =
+    .title = Decodificação por hardware
+    .subtitle =
+        A decodificação por hardware pode melhorar a performance de reprodução.
+        Escolha "{ prefs-vp-mpv-hwdec-options.auto-safe }" ou "{ prefs-vp-mpv-hwdec-options.off }" se estiver tendo problemas.
+        Para mais informações, confira o <a href="{ $mpvManualUrl }">manual do MPV</a>.
+prefs-vp-mpv-hwdec-options =
+    .auto = Automática
+    .auto-copy = Automática (cópia)
+    .auto-safe = Automática (segura)
+    .custom = Personalizada
+    .off = Desativada

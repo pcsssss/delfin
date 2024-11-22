@@ -91,3 +91,15 @@ prefs-vp-subs-more-ass-warning =
         ASS/SSA 字幕通常包含特殊风格和位置。更改这些首选项可能会导致 ASS/SSA 字幕渲染不正确。
 
         如果您只想更改其他字幕格式的风格，建议您更改“{ prefs-vp-subs-style }”下的首选项。
+prefs-vp-mpv-hwdec =
+    .title = 硬件解码
+    .subtitle =
+        硬件解码可以提高播放性能。
+        如果遇到问题，请选择“{ prefs-vp-mpv-hwdec-options.auto-safe }”或“{ prefs-vp-mpv-hwdec-options.off }”。
+        有关更多信息，请参阅 <a href="{ $mpvManualUrl }">MPV 手册</a>。
+prefs-vp-mpv-hwdec-options =
+    .auto = Auto
+    .auto-copy = Auto (copy)
+    .auto-safe = Auto (safe)
+    .custom = 自定义
+    .off = 关

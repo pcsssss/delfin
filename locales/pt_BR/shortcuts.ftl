@@ -21,3 +21,4 @@ sc-lib = Biblioteca
 sc-gen-menu = Abrir menu
 sc-lib-refresh = Atualizar
 sc-vp-playback-speed = Ajustar velocidade de reprodução
+sc-vp-deinterlace = Ativar/Desativar desentrelaçamento
