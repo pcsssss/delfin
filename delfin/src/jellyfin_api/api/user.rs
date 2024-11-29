@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 
 use anyhow::Result;
+use jellyfin_api::types::{QuickConnectDto, QuickConnectResult};
 use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
 use tracing::error;
@@ -74,6 +75,58 @@ pub async fn authenticate_by_name(
             anyhow::bail!("Error signing in.");
         }
     }
+}
+
+pub async fn authenticate_by_pin_init(url: &str, device_id: &Uuid) -> Result<QuickConnectResult> {
+    let client = get_unauthed_client();
+    let initiate_url = httpify(url);
+    let initiate_url = format!("{}QuickConnect/Initiate", initiate_url);
+
+    Ok(client
+        .get(initiate_url)
+        .header("authorization", get_auth_header(device_id, None))
+        .send()
+        .await?
+        .json()
+        .await?)
+}
+
+pub async fn authenticate_by_pin_connect(
+    url: &str,
+    device_id: &Uuid,
+    secret: &str,
+) -> Result<QuickConnectResult> {
+    let client = get_unauthed_client();
+    let connect_url = httpify(url);
+    let connect_url = format!("{}QuickConnect/Connect?Secret={}", connect_url, secret);
+
+    Ok(client
+        .get(connect_url.clone())
+        .header("authorization", get_auth_header(device_id, None))
+        .send()
+        .await?
+        .json()
+        .await?)
+}
+
+pub async fn authenticate_by_pin_authenticate(
+    url: &str,
+    device_id: &Uuid,
+    secret: &str,
+) -> Result<AuthenticateByNameRes> {
+    let client = get_unauthed_client();
+    let authenticate_url = httpify(url);
+    let authenticate_url = format!("{}Users/AuthenticateWithQuickConnect", authenticate_url);
+    Ok(client
+        .post(authenticate_url)
+        .header("authorization", get_auth_header(device_id, None))
+        .json(&QuickConnectDto {
+            secret: secret.into(),
+        })
+        .send()
+        .await?
+        .json()
+        .await?)
 }
 
 pub async fn get_user_avatar(url: &str, user_id: &Uuid) -> Result<VecDeque<u8>> {
