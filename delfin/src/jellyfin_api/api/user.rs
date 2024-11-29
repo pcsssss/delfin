@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use anyhow::Result;
-use jellyfin_api::types::{QuickConnectDto, QuickConnectResult};
+use jellyfin_api::types::QuickConnectDto;
 use reqwest::{StatusCode, Url};
 use serde::{Deserialize, Serialize};
 use tracing::error;
@@ -52,11 +52,14 @@ pub async fn authenticate_by_name(
     let client = get_unauthed_client();
 
     let url = httpify(url);
-    let url = format!("{}Users/AuthenticateByName", url);
+    let url = format!("{url}Users/AuthenticateByName");
 
     let res = client
         .post(url)
-        .header("authorization", get_auth_header(device_id, None))
+        .header(
+            reqwest::header::AUTHORIZATION,
+            get_auth_header(device_id, None),
+        )
         .json(&AuthenticateByNameReqBody {
             username: username.into(),
             password: password.into(),
@@ -77,49 +80,22 @@ pub async fn authenticate_by_name(
     }
 }
 
-pub async fn authenticate_by_pin_init(url: &str, device_id: &Uuid) -> Result<QuickConnectResult> {
-    let client = get_unauthed_client();
-    let initiate_url = httpify(url);
-    let initiate_url = format!("{}QuickConnect/Initiate", initiate_url);
-
-    Ok(client
-        .get(initiate_url)
-        .header("authorization", get_auth_header(device_id, None))
-        .send()
-        .await?
-        .json()
-        .await?)
-}
-
-pub async fn authenticate_by_pin_connect(
-    url: &str,
-    device_id: &Uuid,
-    secret: &str,
-) -> Result<QuickConnectResult> {
-    let client = get_unauthed_client();
-    let connect_url = httpify(url);
-    let connect_url = format!("{}QuickConnect/Connect?Secret={}", connect_url, secret);
-
-    Ok(client
-        .get(connect_url.clone())
-        .header("authorization", get_auth_header(device_id, None))
-        .send()
-        .await?
-        .json()
-        .await?)
-}
-
-pub async fn authenticate_by_pin_authenticate(
+pub async fn authenticate_by_pin(
     url: &str,
     device_id: &Uuid,
     secret: &str,
 ) -> Result<AuthenticateByNameRes> {
     let client = get_unauthed_client();
-    let authenticate_url = httpify(url);
-    let authenticate_url = format!("{}Users/AuthenticateWithQuickConnect", authenticate_url);
+
+    let url = httpify(url);
+    let url = format!("{url}Users/AuthenticateWithQuickConnect");
+
     Ok(client
-        .post(authenticate_url)
-        .header("authorization", get_auth_header(device_id, None))
+        .post(url)
+        .header(
+            reqwest::header::AUTHORIZATION,
+            get_auth_header(device_id, None),
+        )
         .json(&QuickConnectDto {
             secret: secret.into(),
         })

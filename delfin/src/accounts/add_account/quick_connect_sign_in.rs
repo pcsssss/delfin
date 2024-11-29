@@ -1,15 +1,16 @@
 use std::time::Duration;
 
 use adw::prelude::*;
+use anyhow::Result;
 use gtk::gdk;
 use relm4::{prelude::*, JoinHandle};
 use uuid::Uuid;
 
 use crate::{
     config::Server,
-    jellyfin_api::api::user::{
-        authenticate_by_pin_authenticate, authenticate_by_pin_connect, authenticate_by_pin_init,
-        AuthenticateByNameRes,
+    jellyfin_api::api::{
+        quick_connect::QuickConnectClient,
+        user::{authenticate_by_pin, AuthenticateByNameRes},
     },
     tr,
 };
@@ -182,53 +183,40 @@ fn begin_quick_connect(
     let sender = sender.clone();
     let url = server.url.clone();
     relm4::spawn(async move {
-        let auth_info = match authenticate_by_pin_init(&url, &device_id).await {
-            Ok(auth_info) => auth_info,
-            Err(err) => {
-                sender
-                    .output(QuickConnectSignInOutput::Toast(err.to_string(), 3))
-                    .unwrap();
-                return;
-            }
-        };
-
-        sender.input(QuickConnectSignInInput::SetQuickConnectCode(
-            auth_info.code.unwrap(),
-        ));
-
-        let secret = loop {
-            sender.input(QuickConnectSignInInput::SetWaiting);
-            tokio::time::sleep(Duration::from_secs(3)).await;
-
-            sender.input(QuickConnectSignInInput::SetLoading);
-            match authenticate_by_pin_connect(&url, &device_id, auth_info.secret.as_ref().unwrap())
-                .await
-            {
-                Ok(quick_connect_res) => {
-                    if quick_connect_res.authenticated.unwrap() {
-                        break quick_connect_res.secret.unwrap();
-                    }
-                }
-                Err(err) => {
-                    sender
-                        .output(QuickConnectSignInOutput::Toast(err.to_string(), 3))
-                        .unwrap();
-                    return;
-                }
-            }
-        };
-
-        match authenticate_by_pin_authenticate(&url, &device_id, &secret).await {
-            Ok(account) => {
-                sender.input(QuickConnectSignInInput::AccountAdded(account));
-            }
-            Err(err) => {
-                sender
-                    .output(QuickConnectSignInOutput::Toast(err.to_string(), 3))
-                    .unwrap();
-                #[allow(clippy::needless_return)]
-                return;
-            }
-        };
+        if let Err(err) = try_quick_connect(&sender, &url, &device_id).await {
+            tracing::error!("Quick connect failed: {err:#?}");
+            sender
+                .output(QuickConnectSignInOutput::Toast(err.to_string(), 3))
+                .unwrap();
+        }
     })
+}
+
+async fn try_quick_connect(
+    sender: &ComponentSender<QuickConnectSignIn>,
+    url: &str,
+    device_id: &Uuid,
+) -> Result<()> {
+    let client = QuickConnectClient::new(url, device_id)?;
+
+    let auth_info = client.init().await?;
+    sender.input(QuickConnectSignInInput::SetQuickConnectCode(
+        auth_info.code.unwrap(),
+    ));
+
+    let secret = loop {
+        sender.input(QuickConnectSignInInput::SetWaiting);
+        tokio::time::sleep(Duration::from_secs(3)).await;
+
+        sender.input(QuickConnectSignInInput::SetLoading);
+        let quick_connect_res = client.connect(auth_info.secret.as_ref().unwrap()).await?;
+        if quick_connect_res.authenticated.unwrap() {
+            break quick_connect_res.secret.unwrap();
+        }
+    };
+
+    let account = authenticate_by_pin(url, device_id, &secret).await?;
+    sender.input(QuickConnectSignInInput::AccountAdded(account));
+
+    Ok(())
 }

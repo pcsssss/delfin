@@ -4,7 +4,10 @@ use uuid::Uuid;
 
 use crate::{
     config::Server,
-    jellyfin_api::api::user::{authenticate_by_name, AuthenticateByNameRes},
+    jellyfin_api::api::{
+        quick_connect::quick_connect_enabled,
+        user::{authenticate_by_name, AuthenticateByNameRes},
+    },
     tr,
 };
 
@@ -22,6 +25,7 @@ pub(crate) struct PasswordSignIn {
     username: String,
     password: String,
     valid: ValidationState,
+    quick_connect_enabled: bool,
 }
 
 #[derive(Debug)]
@@ -30,6 +34,7 @@ pub(crate) enum PasswordSignInInput {
     PasswordChanged(String),
     SignIn,
     QuickConnect,
+    SetQuickConnectEnabled(bool),
 }
 
 #[derive(Debug)]
@@ -107,14 +112,18 @@ impl Component for PasswordSignIn {
                                         sender.input(PasswordSignInInput::SignIn);
                                     }
                                 },
-                                #[name = "quick_connect_btn"]
-                                gtk::Button {
-                                    set_halign: gtk::Align::Fill,
-                                    set_label: tr!("account-list-quick-connect"),
-                                    add_css_class: "pill",
-                                    connect_clicked[sender] => move |_| {
-                                        sender.input(PasswordSignInInput::QuickConnect);
-                                    }
+                                gtk::Revealer {
+                                    #[watch]
+                                    set_reveal_child: model.quick_connect_enabled,
+                                    #[name = "quick_connect_btn"]
+                                    gtk::Button {
+                                        set_halign: gtk::Align::Fill,
+                                        set_label: tr!("account-list-quick-connect"),
+                                        add_css_class: "pill",
+                                        connect_clicked[sender] => move |_| {
+                                            sender.input(PasswordSignInInput::QuickConnect);
+                                        }
+                                    },
                                 },
                             }
                         } else {
@@ -133,12 +142,29 @@ impl Component for PasswordSignIn {
     ) -> ComponentParts<Self> {
         let (server, device_id) = init;
 
+        relm4::spawn({
+            let server = server.clone();
+            let sender = sender.clone();
+            {
+                async move {
+                    if let Ok(quick_connect_enabled) =
+                        quick_connect_enabled(&server.url, &device_id).await
+                    {
+                        sender.input(PasswordSignInInput::SetQuickConnectEnabled(
+                            quick_connect_enabled,
+                        ));
+                    }
+                }
+            }
+        });
+
         let model = Self {
             server,
             device_id,
             username: String::default(),
             password: String::default(),
             valid: ValidationState::default(),
+            quick_connect_enabled: false,
         };
 
         let widgets = view_output!();
@@ -171,6 +197,9 @@ impl Component for PasswordSignIn {
             }
             PasswordSignInInput::QuickConnect => {
                 sender.output(PasswordSignInOutput::QuickConnect).unwrap();
+            }
+            PasswordSignInInput::SetQuickConnectEnabled(quick_connect_enabled) => {
+                self.quick_connect_enabled = quick_connect_enabled;
             }
         }
     }

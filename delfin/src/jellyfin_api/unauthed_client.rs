@@ -1,8 +1,8 @@
-use reqwest::Client;
+use reqwest::{Client, ClientBuilder};
 
 use super::api_client::APP_USER_AGENT;
 
-pub fn get_unauthed_client() -> Client {
+pub(crate) fn get_unauthed_client_builder() -> ClientBuilder {
     #[cfg_attr(not(debug_assertions), allow(unused_mut))]
     let mut client = Client::builder().user_agent(APP_USER_AGENT);
 
@@ -15,5 +15,9 @@ pub fn get_unauthed_client() -> Client {
         }
     }
 
-    client.build().unwrap()
+    client
+}
+
+pub fn get_unauthed_client() -> Client {
+    get_unauthed_client_builder().build().unwrap()
 }
