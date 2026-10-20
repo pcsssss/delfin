@@ -3,7 +3,9 @@ use jellyfin_api::types::{BaseItemDto, BaseItemDtoQueryResult};
 
 use crate::jellyfin_api::{
     api_client::ApiClient,
-    models::{collection_type::CollectionType, user_view::UserView},
+    models::{
+        collection_sort::CollectionSort, collection_type::CollectionType, user_view::UserView,
+    },
 };
 
 impl ApiClient {
@@ -43,6 +45,7 @@ impl ApiClient {
     pub async fn get_collection_items(
         &self,
         collection: &BaseItemDto,
+        sort: CollectionSort,
         start_index: usize,
         limit: usize,
     ) -> Result<(Vec<BaseItemDto>, usize)> {
@@ -55,8 +58,8 @@ impl ApiClient {
 
         url.query_pairs_mut()
             .append_pair("ParentId", &collection.id.unwrap().to_string())
-            .append_pair("SortBy", "SortName,ProductionYear")
-            .append_pair("SortOrder", "Ascending")
+            .append_pair("SortBy", sort.sort_by())
+            .append_pair("SortOrder", sort.sort_order())
             .append_pair("Recursive", "true")
             .append_pair("StartIndex", &start_index.to_string())
             .append_pair("Limit", &limit.to_string());

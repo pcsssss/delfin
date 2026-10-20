@@ -11,7 +11,7 @@ use relm4::{
 use crate::{
     borgar::borgar_menu::{BorgarMenu, BorgarMenuAuth},
     config::{Account, Server},
-    jellyfin_api::api_client::ApiClient,
+    jellyfin_api::{api_client::ApiClient, models::collection_sort::CollectionSort},
     library::{
         media_page::{MediaPage, MediaPageInput},
         media_tile::MediaTileDisplay,
@@ -25,6 +25,7 @@ use super::{media_fetcher::Fetcher, media_page::MediaPageInit};
 pub struct Collection {
     api_client: Arc<ApiClient>,
     collection: BaseItemDto,
+    sort: CollectionSort,
     borgar_menu: Controller<BorgarMenu>,
     media_page: Controller<MediaPage<CollectionItemsFetcher, EmptyComponent>>,
 }
@@ -32,6 +33,7 @@ pub struct Collection {
 #[derive(Debug)]
 pub enum CollectionInput {
     Refresh,
+    SortChanged(u32),
 }
 
 #[relm4::component(pub)]
@@ -48,6 +50,18 @@ impl Component for Collection {
             set_child = &adw::ToolbarView {
                 add_top_bar = &adw::HeaderBar {
                     pack_end = model.borgar_menu.widget(),
+                    pack_end = &gtk::DropDown::from_strings(&[
+                        tr!("library-collection-sort-name-ascending"),
+                        tr!("library-collection-sort-name-descending"),
+                        tr!("library-collection-sort-date-descending"),
+                        tr!("library-collection-sort-date-ascending"),
+                    ]) {
+                        set_tooltip: tr!("library-collection-sort-label"),
+                        set_valign: gtk::Align::Center,
+                        connect_selected_notify[sender] => move |dropdown| {
+                            sender.input(CollectionInput::SortChanged(dropdown.selected()));
+                        },
+                    },
                     pack_end = &gtk::Button::from_icon_name("refresh") {
                         set_tooltip: tr!("library-collection-refresh-button"),
                         connect_clicked[sender] => move |_| {
@@ -78,6 +92,7 @@ impl Component for Collection {
         let model = Collection {
             api_client: api_client.clone(),
             collection: collection.clone(),
+            sort: CollectionSort::default(),
             borgar_menu: BorgarMenu::builder()
                 .launch(Some(BorgarMenuAuth {
                     api_client: api_client.clone(),
@@ -85,7 +100,7 @@ impl Component for Collection {
                     account,
                 }))
                 .detach(),
-            media_page: new_media_page(&api_client, collection),
+            media_page: new_media_page(&api_client, collection, CollectionSort::default()),
         };
 
         model.media_page.emit(MediaPageInput::NextPage);
@@ -109,14 +124,23 @@ impl Component for Collection {
         _root: &Self::Root,
     ) {
         match message {
-            CollectionInput::Refresh => {
-                let toolbar_view = &widgets.toolbar_view;
-                let media_page = new_media_page(&self.api_client, self.collection.clone());
-                toolbar_view.set_content(Some(media_page.widget()));
-                media_page.emit(MediaPageInput::NextPage);
-                self.media_page = media_page;
+            CollectionInput::Refresh => {}
+            CollectionInput::SortChanged(selected) => {
+                let Some(sort) = CollectionSort::from_selected(selected) else {
+                    return;
+                };
+                if sort == self.sort {
+                    return;
+                }
+                self.sort = sort;
             }
         }
+        // Replace the page (and its fetcher) so a new order always starts at page one.
+        // Old in-flight requests belong to the old component, never the new grid.
+        let media_page = new_media_page(&self.api_client, self.collection.clone(), self.sort);
+        widgets.toolbar_view.set_content(Some(media_page.widget()));
+        media_page.emit(MediaPageInput::NextPage);
+        self.media_page = media_page;
         self.update_view(widgets, sender);
     }
 }
@@ -146,10 +170,12 @@ impl Collection {
 fn new_media_page(
     api_client: &Arc<ApiClient>,
     collection: BaseItemDto,
+    sort: CollectionSort,
 ) -> Controller<MediaPage<CollectionItemsFetcher, EmptyComponent>> {
     let fetcher = CollectionItemsFetcher {
         api_client: api_client.clone(),
         collection,
+        sort,
     };
     MediaPage::builder()
         .launch(MediaPageInit {
@@ -164,12 +190,13 @@ fn new_media_page(
 struct CollectionItemsFetcher {
     api_client: Arc<ApiClient>,
     collection: BaseItemDto,
+    sort: CollectionSort,
 }
 
 impl Fetcher for CollectionItemsFetcher {
     async fn fetch(&self, start_index: usize, limit: usize) -> Result<(Vec<BaseItemDto>, usize)> {
         self.api_client
-            .get_collection_items(&self.collection, start_index, limit)
+            .get_collection_items(&self.collection, self.sort, start_index, limit)
             .await
     }
 
