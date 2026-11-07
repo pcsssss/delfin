@@ -80,6 +80,8 @@ pub enum AppInput {
     ServerSelected(config::Server),
     AccountSelected(config::Server, config::Account),
     ShowDetails(BaseItemDto),
+    RemoveMedia(BaseItemDto, String),
+    RemovalFinished,
     ShowCollection(BaseItemDto),
     PlayVideo(BaseItemDto),
     SignOut,
@@ -273,6 +275,24 @@ impl Component for App {
                     .forward(sender.input_sender(), convert_library_output);
                 navigation.push(library.widget());
                 self.library = Some(library);
+            }
+            AppInput::RemoveMedia(media, origin) => {
+                if let (Some(library), Some(id)) = (&self.library, media.id) {
+                    library.emit(crate::library::LibraryInput::RemoveMedia(
+                        id.to_string().replace('-', ""),
+                        origin,
+                    ));
+                }
+            }
+            AppInput::RemovalFinished => {
+                *crate::library::LIBRARY_REFRESH_QUEUED.write() = true;
+                *crate::media_details::MEDIA_DETAILS_REFRESH_QUEUED.write() = true;
+                if let Some(library) = &self.library {
+                    library.emit(crate::library::LibraryInput::Refresh);
+                }
+                if let Some(collection) = &self.collection {
+                    collection.emit(crate::library::collection::CollectionInput::AfterRemoval);
+                }
             }
             AppInput::ShowDetails(media) => {
                 if let (Some(api_client), Some(server), Some(account)) =

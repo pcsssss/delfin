@@ -39,6 +39,7 @@ endif
 
 cargo_build = custom_target(
   'cargo-build',
+  depends: subproject('sys').get_variable('lib'),
   build_always_stale: true,
   output: 'cargo-build',
   console: true,

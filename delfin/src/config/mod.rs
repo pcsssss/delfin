@@ -23,6 +23,9 @@ pub struct Config {
     #[serde(default)]
     pub video_player: VideoPlayerConfig,
     pub servers: Vec<Server>,
+    /// Nonsecret Seerr connection only; authentication is never persisted here.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub seerr: Option<crate::seerr::ConnectionConfig>,
 }
 
 impl Default for Config {
@@ -33,6 +36,7 @@ impl Default for Config {
             general: GeneralConfig::default(),
             video_player: VideoPlayerConfig::default(),
             servers: Vec::default(),
+            seerr: None,
         }
     }
 }

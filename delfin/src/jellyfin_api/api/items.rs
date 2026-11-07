@@ -1,6 +1,7 @@
+use super::views::decode_collection_page;
 use anyhow::{Context, Result};
 use derive_builder::Builder;
-use jellyfin_api::types::{BaseItemDto, BaseItemDtoQueryResult};
+use jellyfin_api::types::BaseItemDto;
 
 use crate::jellyfin_api::api_client::ApiClient;
 
@@ -51,7 +52,10 @@ impl ApiClient {
             }
         }
 
-        let res: BaseItemDtoQueryResult = self.client.get(url).send().await?.json().await?;
+        url.query_pairs_mut()
+            .append_pair("Fields", "MediaStreams,ProviderIds");
+        let response = self.client.get(url).send().await?.error_for_status()?;
+        let res = decode_collection_page(response.json().await?)?;
 
         let items = res.items.context("No items returned")?;
         let total_record_count = res

@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use unic_langid::LanguageIdentifier;
 use uuid::Uuid;
 
+use crate::jellyfin_api::models::collection_sort::CollectionSort;
+
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 enum InnerTheme {
     Light,
@@ -61,6 +63,7 @@ pub struct GeneralConfig {
     pub most_recent_login: Option<MostRecentLogin>,
     pub restore_most_recent_login: bool,
     pub use_episode_image: bool,
+    pub collection_sort: CollectionSort,
 }
 
 impl Default for GeneralConfig {
@@ -71,6 +74,7 @@ impl Default for GeneralConfig {
             most_recent_login: Option::default(),
             restore_most_recent_login: true,
             use_episode_image: false,
+            collection_sort: CollectionSort::default(),
         }
     }
 }

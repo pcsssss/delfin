@@ -55,6 +55,126 @@
     }
   }
 
+  label.storage-size,
+  label.movie-resolution {
+    color: white;
+    background: rgba(black, 80%);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: 600;
+
+    &:hover {
+      text-decoration: none;
+    }
+  }
+
+  button.imdb-link {
+    background: #f5c518;
+    color: #151515;
+    border: none;
+    border-radius: 3px;
+    box-shadow: none;
+    padding: 1px 5px;
+    min-height: 20px;
+    min-width: 30px;
+    font-size: 11px;
+    font-weight: 800;
+
+    &:hover { background: #ffdb58; }
+    &:focus-visible {
+      outline: solid 2px "@accent_color";
+      outline-offset: 3px;
+    }
+  }
+
+  &.movie-grid-card {
+    label:hover {
+      text-decoration: none;
+    }
+
+    button.movie-card-details {
+      background: transparent;
+      box-shadow: none;
+      border: none;
+      border-radius: 4px;
+      padding: 0;
+      color: inherit;
+
+      &:hover .movie-card-title {
+        text-decoration: underline;
+      }
+
+      &:focus-visible {
+        outline: solid 2px "@accent_color";
+        outline-offset: 4px;
+      }
+    }
+
+    .movie-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 19px;
+    }
+
+    .movie-card-subtitle,
+    .movie-card-secondary {
+      font-size: 12px;
+      line-height: 17px;
+      opacity: 0.75;
+    }
+
+    .movie-card-ratings {
+      min-height: 19px;
+    }
+
+    .movie-card-score {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 19px;
+    }
+
+    .movie-rating-star {
+      color: "@warning_color";
+    }
+
+    .movie-card-watch-label {
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .movie-watched,
+    .discovery-available {
+      color: "@success_color";
+    }
+
+    .movie-watching,
+    .discovery-processing {
+      color: "@accent_color";
+    }
+
+    .movie-unwatched,
+    .discovery-neutral {
+      opacity: 0.7;
+    }
+  }
+
+  &.discovery-card {
+    .discovery-art {
+      background: "--gtk-alpha(@window_fg_color, 0.06)";
+    }
+
+    button.discovery-trailer {
+      padding: 0;
+      min-height: 24px;
+      font-size: 12px;
+    }
+
+    button.discovery-poster:hover picture {
+      opacity: 0.9;
+    }
+  }
+
   &.hover {
     picture {
       box-shadow: 0px 5px 5px -3px rgba(0, 0, 0, 33%);

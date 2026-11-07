@@ -1,20 +1,16 @@
-use std::sync::Arc;
-
-use gtk::{pango, prelude::*};
-use relm4::{gtk, prelude::*};
-use tokio::sync::mpsc;
-
-use crate::{
-    jellyfin_api::api_client::ApiClient, library::library_container::LibraryContainer,
-    utils::constants::PAGE_MARGIN,
-};
-
 use super::{
-    media_fetcher::{Fetcher, FetcherCount, FetcherDisplay, FetcherState, MediaFetcher},
-    media_grid::{MediaGrid, MediaGridInit},
+    media_fetcher::{Fetcher, FetcherCount, FetcherState, FetcherUpdate, MediaFetcher},
+    media_grid::{MediaGrid, MediaGridInit, MediaGridInput},
     media_tile::MediaTileDisplay,
 };
-
+use crate::{
+    jellyfin_api::api_client::ApiClient, library::library_container::LibraryContainer, tr,
+    utils::constants::PAGE_MARGIN,
+};
+use gtk::{pango, prelude::*};
+use relm4::{gtk, prelude::*};
+use std::sync::Arc;
+use tokio::sync::mpsc;
 const ITEMS_PER_PAGE: usize = 24;
 
 pub struct MediaPage<F: Fetcher + Send + Sync + 'static, EmptyComponent: Component>
@@ -29,19 +25,22 @@ where
     state: FetcherState,
     count: Option<FetcherCount>,
 }
-
 pub struct MediaPageInit<F, C: Component> {
     pub api_client: Arc<ApiClient>,
     pub fetcher: F,
     pub empty_component: Option<Controller<C>>,
     pub media_tile_display: Option<MediaTileDisplay>,
 }
-
 #[derive(Debug)]
 pub enum MediaPageInput {
-    FetcherState(FetcherState),
+    FetcherState(FetcherUpdate),
+    Refresh,
     NextPage,
-    PrevPage,
+    CheckScroll,
+}
+
+fn near_bottom(value: f64, upper: f64, page: f64) -> bool {
+    page > 0.0 && upper - value - page <= (page * 0.6).max(400.0)
 }
 
 #[relm4::component(pub)]
@@ -54,25 +53,19 @@ where
     type Input = MediaPageInput;
     type Output = ();
     type CommandOutput = ();
-
     view! {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
             set_hexpand: true,
             set_vexpand: true,
-
             #[template]
             LibraryContainer {
                 set_margin_top: 0,
                 set_margin_bottom: 0,
-                #[watch]
-                set_visible: matches!(model.state, FetcherState::Loading(_) | FetcherState::Ready(_)),
-
                 gtk::Box {
                     set_orientation: gtk::Orientation::Horizontal,
                     set_margin_top: PAGE_MARGIN,
                     set_margin_bottom: PAGE_MARGIN,
-
                     gtk::Label {
                         #[watch]
                         set_label: &model.fetcher.title(),
@@ -80,86 +73,82 @@ where
                         set_margin_end: 8,
                         set_ellipsize: pango::EllipsizeMode::End,
                     },
-
                     gtk::Label {
                         set_halign: gtk::Align::End,
                         set_hexpand: true,
-                        set_margin_end: 8,
+                        #[watch]
+                        set_visible: model.count.is_some_and(|c| c.total > 0 || c.end > 0),
                         #[watch]
                         set_label?: &model.count.as_ref().map(|count| count.label()),
                     },
-
-                    gtk::Box {
-                        set_orientation: gtk::Orientation::Horizontal,
-                        add_css_class: "linked",
-
-                        gtk::Button {
-                            set_icon_name: "left",
-                            add_css_class: "flat",
-                            #[watch]
-                            set_sensitive: model.fetcher.has_prev(),
-                            connect_clicked[sender] => move |_| {
-                                sender.input(MediaPageInput::PrevPage);
-                            },
-                        },
-
-                        gtk::Button {
-                            set_icon_name: "right",
-                            add_css_class: "flat",
-                            #[watch]
-                            set_sensitive: model.fetcher.has_next(),
-                            connect_clicked[sender] => move |_| {
-                                sender.input(MediaPageInput::NextPage);
-                            },
-                        },
-                    },
                 },
             },
-
-            gtk::Spinner {
-                #[watch]
-                set_visible: matches!(model.state, FetcherState::Loading(_)),
-                set_spinning: true,
-                set_width_request: 32,
-                set_height_request: 32,
-            },
-
             #[template]
             LibraryContainer {
                 #[watch]
                 set_visible: matches!(model.state, FetcherState::Empty),
-
-                #[name = "empty_container"]
                 gtk::Box {
-                    set_widget_name: "empty_container",
                     set_orientation: gtk::Orientation::Vertical,
                     set_spacing: 32,
-
-
                     append?: model.empty_component.as_ref().map(|c| c.widget()),
+                    gtk::Label {
+                        set_visible: model.empty_component.is_none(),
+                        set_label: tr!("library-no-items"),
+                        add_css_class: "dim-label",
+                    },
                 },
             },
-
             #[name = "scroll"]
             gtk::ScrolledWindow {
                 set_hexpand: true,
                 set_vexpand: true,
+                set_hscrollbar_policy: gtk::PolicyType::Never,
                 #[watch]
-                set_visible: matches!(model.state, FetcherState::Ready(_)),
-
+                set_visible: model.media_grid.is_some(),
                 #[template]
                 LibraryContainer {
                     #[name = "media_grid_container"]
                     gtk::Box {
-                        set_widget_name: "media_grid_container",
                         set_orientation: gtk::Orientation::Vertical,
-                        set_spacing: 32,
                     },
                 },
             },
+            gtk::Box {
+                set_orientation: gtk::Orientation::Horizontal,
+                set_halign: gtk::Align::Center,
+                set_spacing: 8,
+                set_margin_all: 12,
+                #[watch]
+                set_visible: matches!(model.state, FetcherState::Loading(_)),
+                gtk::Spinner { set_spinning: true, set_width_request: 24, set_height_request: 24 },
+                gtk::Label { set_label: tr!("library-loading-items") },
+            },
+            gtk::Box {
+                set_orientation: gtk::Orientation::Horizontal,
+                set_halign: gtk::Align::Center,
+                set_spacing: 12,
+                set_margin_all: 12,
+                #[watch]
+                set_visible: matches!(model.state, FetcherState::Error(_)),
+                gtk::Label {
+                    set_label: tr!("library-load-error"),
+                    set_wrap: true,
+                },
+                gtk::Button {
+                    set_label: tr!("library-load-retry"),
+                    connect_clicked => MediaPageInput::NextPage,
+                },
+            },
+            gtk::Button {
+                set_halign: gtk::Align::Center,
+                set_margin_all: 12,
+                set_label: tr!("library-load-more"),
+                #[watch]
+                set_visible: matches!(model.state, FetcherState::Ready(_)) && model.fetcher.has_next(),
+                connect_clicked => MediaPageInput::NextPage,
+            },
         }
     }
-
     fn init(
         init: Self::Init,
         root: Self::Root,
@@ -171,11 +160,8 @@ where
             empty_component,
             media_tile_display,
         } = init;
-
         let (tx, mut rx) = mpsc::unbounded_channel();
-
         let fetcher = MediaFetcher::new(Arc::new(fetcher), tx, ITEMS_PER_PAGE);
-
         relm4::spawn({
             let sender = sender.clone();
             async move {
@@ -184,7 +170,6 @@ where
                 }
             }
         });
-
         let model = MediaPage {
             api_client,
             fetcher,
@@ -194,12 +179,16 @@ where
             state: FetcherState::Empty,
             count: None,
         };
-
         let widgets = view_output!();
-
+        let adjustment = widgets.scroll.vadjustment();
+        adjustment.connect_value_changed({
+            let sender = sender.clone();
+            move |_| sender.input(MediaPageInput::CheckScroll)
+        });
+        // Also fill a tall/resized viewport without requiring a scroll gesture.
+        adjustment.connect_changed(move |_| sender.input(MediaPageInput::CheckScroll));
         ComponentParts { model, widgets }
     }
-
     fn update_with_view(
         &mut self,
         widgets: &mut Self::Widgets,
@@ -208,43 +197,85 @@ where
         _root: &Self::Root,
     ) {
         match message {
-            MediaPageInput::FetcherState(state) => {
-                self.count = match state {
-                    FetcherState::Loading(count) => Some(count),
-                    FetcherState::Ready(FetcherDisplay { items: _, count }) => Some(count),
-                    _ => None,
-                };
-
-                if let FetcherState::Ready(display) = &state {
-                    let media_grid_container = &widgets.media_grid_container;
-
-                    if let Some(media_grid) = self.media_grid.take() {
-                        media_grid_container.remove(media_grid.widget());
+            MediaPageInput::Refresh => {
+                self.fetcher.refresh_loaded();
+            }
+            MediaPageInput::FetcherState(update) => {
+                if !self.fetcher.is_current(update.generation) {
+                    return;
+                }
+                let state = update.state;
+                match &state {
+                    FetcherState::Loading(count) => self.count = Some(*count),
+                    FetcherState::Ready(display) => {
+                        self.count = Some(display.count);
+                        if display.replace && display.items.is_empty() {
+                            if let Some(grid) = self.media_grid.take() {
+                                widgets.media_grid_container.remove(grid.widget());
+                            }
+                        } else if let Some(grid) = &self.media_grid {
+                            grid.emit(if display.replace {
+                                MediaGridInput::Reconcile(display.items.clone())
+                            } else {
+                                MediaGridInput::Append(display.items.clone())
+                            });
+                        } else if !display.items.is_empty() {
+                            let grid = MediaGrid::builder()
+                                .launch(MediaGridInit {
+                                    media: display.items.clone(),
+                                    media_tile_display: self.media_tile_display,
+                                    api_client: self.api_client.clone(),
+                                })
+                                .detach();
+                            widgets.media_grid_container.append(grid.widget());
+                            self.media_grid = Some(grid);
+                        }
                     }
-
-                    let media_grid = MediaGrid::builder()
-                        .launch(MediaGridInit {
-                            media: display.items.clone(),
-                            media_tile_display: self.media_tile_display,
-                            api_client: self.api_client.clone(),
-                        })
-                        .detach();
-                    media_grid_container.append(media_grid.widget());
-                    self.media_grid = Some(media_grid);
-
-                    widgets.scroll.set_vadjustment(gtk::Adjustment::NONE);
+                    FetcherState::Error(error) => {
+                        // Keep the original error for debugging, never render a
+                        // raw server URL/response in the desktop notification.
+                        let _ = error;
+                        tracing::warn!("Could not load library items; retry is available");
+                    }
+                    FetcherState::Empty => {}
+                }
+                self.state = if matches!(&state,FetcherState::Ready(d) if d.items.is_empty())
+                    && self.media_grid.is_none()
+                {
+                    FetcherState::Empty
+                } else {
+                    state
                 };
-
-                self.state = state;
+            }
+            MediaPageInput::CheckScroll => {
+                let a = widgets.scroll.vadjustment();
+                if !matches!(self.state, FetcherState::Ready(_))
+                    || !near_bottom(a.value(), a.upper(), a.page_size())
+                {
+                    return;
+                }
+                if self.fetcher.next_page() {
+                    self.state = FetcherState::Loading(self.count.unwrap_or_default());
+                }
             }
             MediaPageInput::NextPage => {
-                self.fetcher.next_page();
-            }
-            MediaPageInput::PrevPage => {
-                self.fetcher.prev_page();
+                if !matches!(self.state, FetcherState::Loading(_)) && self.fetcher.next_page() {
+                    self.state = FetcherState::Loading(self.count.unwrap_or_default());
+                }
             }
         }
-
         self.update_view(widgets, sender);
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::near_bottom;
+    #[test]
+    fn prefetches_near_the_bottom_and_fills_tall_viewports_but_not_unallocated_ones() {
+        assert!(!near_bottom(0.0, 0.0, 0.0));
+        assert!(!near_bottom(0.0, 2400.0, 800.0));
+        assert!(near_bottom(1200.0, 2400.0, 800.0));
+        assert!(near_bottom(0.0, 800.0, 800.0));
+        assert!(near_bottom(1599.0, 2400.0, 800.0));
     }
 }

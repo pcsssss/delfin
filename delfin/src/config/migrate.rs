@@ -47,6 +47,50 @@ mod tests {
     use super::*;
 
     #[test]
+    fn collection_sort_survives_config_reload_without_changing_other_settings() -> Result<()> {
+        use crate::jellyfin_api::models::collection_sort::CollectionSort;
+
+        let mut config = Config::default();
+        config.general.theme = THEME_DARK;
+        config.servers.push(Server {
+            id: uuid!("bed62d79-11b3-4d1e-b185-cb33a41d889b"),
+            name: "Test server".into(),
+            url: "https://jellyfin.example.test".into(),
+            accounts: vec![Account {
+                id: uuid!("88c09387-ec04-412f-a236-5004d6d06869"),
+                username: "test".into(),
+                access_token: "test-token-not-a-credential".into(),
+                device_id: uuid!("ecd59636-b66e-4bff-a721-1d29fd7437fe"),
+            }],
+        });
+        for selected in 0..4 {
+            config.general.collection_sort = CollectionSort::from_selected(selected).unwrap();
+            let reloaded: Config = ConfigVersions::new(&config.to_toml()?)?.into();
+            assert_eq!(reloaded, config);
+            assert_eq!(reloaded.general.collection_sort.selected(), selected);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn existing_v2_config_defaults_to_alphabetical_sort() -> Result<()> {
+        use crate::jellyfin_api::models::collection_sort::CollectionSort;
+
+        let config: Config =
+            ConfigVersions::new("version = 2\nservers = []\n[general]\ntheme = \"Dark\"\n")?.into();
+        assert_eq!(
+            config.general.collection_sort,
+            CollectionSort::NameAscending
+        );
+        assert_eq!(config.general.theme, THEME_DARK);
+        assert!(ConfigVersions::new(
+            "version = 2\nservers = []\n[general]\ncollection_sort = \"invalid\"\n"
+        )
+        .is_err());
+        Ok(())
+    }
+
+    #[test]
     fn test_migrate_v1() -> Result<()> {
         let input = r##"
 device_id = "ecd59636-b66e-4bff-a721-1d29fd7437fe"
@@ -114,6 +158,7 @@ italic = false
 
         let expected = Config {
             version: 2,
+            seerr: None,
             window: Window {
                 width: 967,
                 height: 670,

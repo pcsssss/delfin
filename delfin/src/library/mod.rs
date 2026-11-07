@@ -10,6 +10,7 @@ mod media_grid;
 mod media_list;
 pub mod media_page;
 mod media_tile;
+mod movie_card;
 mod search;
 
 use jellyfin_api::types::BaseItemDto;
@@ -68,6 +69,7 @@ pub struct Library {
     search_results: Controller<SearchResults>,
     home: Option<Controller<Home>>,
     collections: Option<Controller<Collections>>,
+    seerr: crate::seerr::ui::SeerrHub,
     searching: BoolBinding,
     // Store previous view stack child so we can go back from search
     previous_stack_child: Arc<RwLock<String>>,
@@ -75,6 +77,7 @@ pub struct Library {
 
 #[derive(Debug)]
 pub enum LibraryInput {
+    RemoveMedia(String, String),
     SetLibraryState(LibraryState),
     Refresh,
     Shown,
@@ -276,6 +279,7 @@ impl Component for Library {
         sender: relm4::ComponentSender<Self>,
     ) -> relm4::ComponentParts<Self> {
         let (server, account, api_client) = init;
+        let seerr = crate::seerr::ui::SeerrHub::new(Some(&api_client.root));
 
         let model = Library {
             borgar_menu: BorgarMenu::builder()
@@ -290,6 +294,7 @@ impl Component for Library {
             search_results: SearchResults::builder().launch(api_client).detach(),
             home: None,
             collections: None,
+            seerr,
             searching: BoolBinding::default(),
             previous_stack_child: Arc::new(RwLock::new("home".into())),
         };
@@ -356,6 +361,7 @@ impl Component for Library {
         root: &Self::Root,
     ) {
         match message {
+            LibraryInput::RemoveMedia(id, origin) => self.seerr.remove_item(id, origin),
             LibraryInput::SetLibraryState(state) => {
                 self.state = state;
 
@@ -370,6 +376,9 @@ impl Component for Library {
                 };
             }
             LibraryInput::Refresh => {
+                if root.is_child_visible() && self.seerr.refresh_current() {
+                    return;
+                }
                 if root.is_child_visible() {
                     let view_stack = &widgets.view_stack;
 
@@ -388,6 +397,8 @@ impl Component for Library {
                 }
             }
             LibraryInput::Shown => {
+                self.seerr
+                    .set_visible(widgets.view_stack.visible_child_name().as_deref());
                 if *LIBRARY_REFRESH_QUEUED.read() {
                     sender.input(LibraryInput::Refresh);
                     *MEDIA_DETAILS_REFRESH_QUEUED.write() = false;
@@ -398,9 +409,11 @@ impl Component for Library {
                     .set_accelerators_for_action::<RefreshAction>(&["<Ctrl>r"]);
             }
             LibraryInput::Hidden => {
+                self.seerr.set_visible(None);
                 relm4::main_application().set_accelerators_for_action::<RefreshAction>(&[]);
             }
             LibraryInput::ViewStackChildVisible(name) => {
+                self.seerr.set_visible(Some(&name));
                 if name != "search" {
                     self.searching.set_value(false);
                 }
@@ -500,6 +513,14 @@ impl Library {
 
         sender.input(LibraryInput::SetLibraryState(LibraryState::Ready));
 
+        // Re-add the Seerr pages after Home/Collections so refresh preserves tab order.
+        self.seerr.set_visible(None);
+        for page in self.seerr.pages() {
+            if page.parent().is_some() {
+                view_stack.remove(&page);
+            }
+        }
+
         let home = Home::builder()
             .launch(HomeInit {
                 api_client: self.api_client.clone(),
@@ -533,6 +554,31 @@ impl Library {
             "library",
         );
         self.collections = Some(collections);
+
+        for (page, name, title, icon) in [
+            (
+                self.seerr.pages()[0].clone(),
+                "discover",
+                tr!("seerr-discover"),
+                "loupe",
+            ),
+            (
+                self.seerr.pages()[1].clone(),
+                "requests",
+                tr!("seerr-requests"),
+                "tag-multiple-filled",
+            ),
+            (
+                self.seerr.pages()[2].clone(),
+                "downloads",
+                tr!("seerr-downloads"),
+                "folder-download-symbolic",
+            ),
+        ] {
+            if page.parent().is_none() {
+                view_stack.add_titled_with_icon(&page, Some(name), title, icon);
+            }
+        }
     }
 }
 

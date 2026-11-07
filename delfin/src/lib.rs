@@ -9,6 +9,7 @@ pub mod locales;
 pub mod media_details;
 pub mod meson_config;
 pub mod preferences;
+pub mod seerr;
 pub mod servers;
 pub mod utils;
 pub mod video_player;

@@ -62,9 +62,16 @@ pub(crate) enum MediaCarouselOutput {
 
 impl MediaTileDisplay {
     fn min_height(&self, pages: &[gtk::Box]) -> i32 {
+        // BreakpointBin ignores the child's natural minimum: reserve the new
+        // separate removal action (34px button + 8px spacing) on media tiles.
+        let action_height = if matches!(self, Self::Cover | Self::CoverLarge | Self::Wide) {
+            42
+        } else {
+            0
+        };
         match pages.len() {
-            1 => self.height() + 50,
-            _ => self.height() + 80,
+            1 => self.height() + 50 + action_height,
+            _ => self.height() + 80 + action_height,
         }
     }
 }

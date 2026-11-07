@@ -1,6 +1,9 @@
+use serde::{Deserialize, Serialize};
+
 /// Ordering for a complete collection, applied by Jellyfin before pagination.
 /// The variant order matches the collection's sort dropdown.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum CollectionSort {
     #[default]
     NameAscending,
@@ -10,6 +13,10 @@ pub enum CollectionSort {
 }
 
 impl CollectionSort {
+    pub fn selected(self) -> u32 {
+        self as u32
+    }
+
     pub fn from_selected(selected: u32) -> Option<Self> {
         match selected {
             0 => Some(Self::NameAscending),
@@ -51,6 +58,7 @@ mod tests {
         ];
         for (index, (sort_by, sort_order)) in expected.into_iter().enumerate() {
             let sort = CollectionSort::from_selected(index as u32).unwrap();
+            assert_eq!(sort.selected(), index as u32);
             assert_eq!(sort.sort_by(), sort_by);
             assert_eq!(sort.sort_order(), sort_order);
         }

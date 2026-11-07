@@ -9,8 +9,10 @@ use relm4::{
 };
 
 use crate::{
+    app::{AppInput, APP_BROKER},
     borgar::borgar_menu::{BorgarMenu, BorgarMenuAuth},
     config::{Account, Server},
+    globals::CONFIG,
     jellyfin_api::{api_client::ApiClient, models::collection_sort::CollectionSort},
     library::{
         media_page::{MediaPage, MediaPageInput},
@@ -33,6 +35,7 @@ pub struct Collection {
 #[derive(Debug)]
 pub enum CollectionInput {
     Refresh,
+    AfterRemoval,
     SortChanged(u32),
 }
 
@@ -58,6 +61,7 @@ impl Component for Collection {
                     ]) {
                         set_tooltip: tr!("library-collection-sort-label"),
                         set_valign: gtk::Align::Center,
+                        set_selected: model.sort.selected(),
                         connect_selected_notify[sender] => move |dropdown| {
                             sender.input(CollectionInput::SortChanged(dropdown.selected()));
                         },
@@ -88,11 +92,12 @@ impl Component for Collection {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let (api_client, collection, server, account) = init;
+        let sort = CONFIG.read().general.collection_sort;
 
         let model = Collection {
             api_client: api_client.clone(),
             collection: collection.clone(),
-            sort: CollectionSort::default(),
+            sort,
             borgar_menu: BorgarMenu::builder()
                 .launch(Some(BorgarMenuAuth {
                     api_client: api_client.clone(),
@@ -100,7 +105,7 @@ impl Component for Collection {
                     account,
                 }))
                 .detach(),
-            media_page: new_media_page(&api_client, collection, CollectionSort::default()),
+            media_page: new_media_page(&api_client, collection, sort),
         };
 
         model.media_page.emit(MediaPageInput::NextPage);
@@ -124,6 +129,10 @@ impl Component for Collection {
         _root: &Self::Root,
     ) {
         match message {
+            CollectionInput::AfterRemoval => {
+                self.media_page.emit(MediaPageInput::Refresh);
+                return;
+            }
             CollectionInput::Refresh => {}
             CollectionInput::SortChanged(selected) => {
                 let Some(sort) = CollectionSort::from_selected(selected) else {
@@ -133,6 +142,14 @@ impl Component for Collection {
                     return;
                 }
                 self.sort = sort;
+                let mut config = CONFIG.write();
+                config.general.collection_sort = sort;
+                if config.save().is_err() {
+                    APP_BROKER.send(AppInput::Toast(
+                        tr!("library-collection-sort-save-error").to_string(),
+                        None,
+                    ));
+                }
             }
         }
         // Replace the page (and its fetcher) so a new order always starts at page one.

@@ -17,9 +17,13 @@ pub struct ApiClient {
     pub account: Account,
     pub client: reqwest::Client,
     pub root: Url,
+    pub(crate) media_sizes: super::api::storage_size::StorageSizeState,
 }
 
 impl ApiClient {
+    pub(crate) fn server_id(&self) -> uuid::Uuid {
+        self.server.id
+    }
     pub fn new(config: Arc<RwLock<Config>>, server: &Server, account: &Account) -> ApiClient {
         let auth_header = get_auth_header(&account.device_id, Some(&account.access_token));
 
@@ -51,6 +55,7 @@ impl ApiClient {
             account: account.clone(),
             client,
             root,
+            media_sizes: Default::default(),
         }
     }
 }

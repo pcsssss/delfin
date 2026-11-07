@@ -4,6 +4,7 @@ pub mod debounce;
 pub mod device_profile;
 pub mod display_years;
 pub mod empty_component;
+pub mod file_size;
 pub mod inhibit;
 pub mod item_name;
 pub mod main_window;

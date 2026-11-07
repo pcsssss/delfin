@@ -191,6 +191,7 @@ impl Migrate<Config> for ConfigV1 {
                 maximized: self.window.maximized,
             },
             servers,
+            seerr: None,
             general: GeneralConfig {
                 language: self.language,
                 theme: match self.general.theme {

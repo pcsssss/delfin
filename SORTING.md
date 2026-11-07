@@ -11,8 +11,12 @@ Ordering is sent to Jellyfin using `SortBy` and `SortOrder`, before the server
 applies pagination. Date added uses Jellyfin's `DateCreated`, not release date or
 filesystem modification time. Title/year are secondary sort keys for equal dates.
 Changing sort recreates the media page, starting at page one. Refresh keeps the
-selected order. A newly opened collection defaults to A–Z; the choice is not
-persisted across reopening the collection or restarting the application.
+selected order. The last selected order is saved automatically in Delfin’s
+existing `config.toml` as `general.collection_sort`, and restored for newly opened
+movie and TV collections, including after restarting the application. The setting
+is shared across collections. Existing configurations without this setting retain
+the A–Z default. Saving does not change accounts or other preferences; a toast
+reports a failed save without preventing sorting in the current view.
 
 No Jellyfin server changes are required. English strings are provided through
 the existing Fluent localization mechanism; other locales use the English fallback.
@@ -20,19 +24,19 @@ the existing Fluent localization mechanism; other locales use the English fallba
 ## Validation
 
 ```sh
-rustc --edition=2021 --test delfin/src/jellyfin_api/models/collection_sort.rs \
-  -o /tmp/delfin-collection-sort-tests
-/tmp/delfin-collection-sort-tests
+MESON_BUILD_ROOT="$PWD/build-local" FLATPAK=false \
+CARGO_BUILD_JOBS=1 CARGO_PROFILE_RELEASE_DEBUG=0 \
+  cargo test --locked --release -p delfin --lib \
+    --target-dir "$PWD/build-local/delfin"
 git diff --check
-cargo check --locked -p delfin
 ```
 
-The four standalone sort tests and whitespace check passed on the development Mac.
-Full Cargo check is blocked by missing GTK4/Graphene native dependencies on this
-Mac (GTK >= 4.12 is required). No GUI build or playback test has been completed.
-Live API validation was skipped because no active Jellyfin session was available.
+The Linux unit suite passes, including all four dropdown/API mappings, config
+round-trips for every sort choice without changes to other settings, and V1/V2
+backward compatibility. The serde-enabled sort model is tested through Cargo,
+not as a standalone `rustc` file. Live Jellyfin behavior is unchanged.
 
-## Linux acceptance test (still required)
+## Manual acceptance check
 
 Build with the upstream Meson/Flatpak workflow documented in README.md. Open a
 movie collection with more than 24 items, then:
@@ -41,7 +45,8 @@ movie collection with more than 24 items, then:
 2. Verify date ordering against the dates in Jellyfin.
 3. Visit page two and confirm the selected order remains applied.
 4. Change sort while on page two; verify pagination resets to page one.
-5. Refresh; verify the selection is unchanged.
+5. Refresh, reopen the collection, and restart Delfin; verify both the dropdown
+   and the loaded items retain the selection.
 6. Switch choices quickly while loading; verify old results never replace the new order.
 7. Verify keyboard navigation of the dropdown, and test a narrow window and an empty library.
 8. Repeat in a TV collection.
